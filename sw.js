@@ -1,5 +1,5 @@
 // FinTrack Service Worker — PWA
-const CACHE='fintrack-v3';
+const CACHE='fintrack-v4';
 const ASSETS=[
   './',
   './index.html',
@@ -14,7 +14,7 @@ const ASSETS=[
   './libs/fonts/tabler-icons.ttf',
   './libs/fonts/tabler-icons.woff',
   './libs/fonts/tabler-icons.woff2',
-  './libs/Roboto-Regular.ttf'
+  './libs/fonts/Roboto-Regular.ttf'
 ];
 
 self.addEventListener('install',e=>{
