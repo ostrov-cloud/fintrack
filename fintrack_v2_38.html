@@ -1120,7 +1120,7 @@ async function loadST(){
 }
 
 function saveST(){
-  Users.save(ST).catch(e=>console.warn('[ST] Users.save failed:',e));
+  Users.save().catch(e=>console.warn('[ST] Users.save failed:',e));
 }
 
 async function syncToServer(){
