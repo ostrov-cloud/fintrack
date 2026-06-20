@@ -92,7 +92,13 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .hs-lbl{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px;}
 
 .acc-list{display:flex;flex-direction:column;gap:8px;}
-.acc-row{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:border-color .15s;position:relative;}
+.acc-row-wrap{position:relative;overflow:hidden;border-radius:var(--r-sm);}
+.acc-row-actions{position:absolute;top:0;right:0;bottom:0;display:flex;}
+.acc-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
+.acc-row-actions .acc-act-add{background:var(--gr2);}
+.acc-row-actions .acc-act-edit{background:var(--pu6);}
+.acc-row-actions .acc-act-del{background:var(--red);}
+.acc-row{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:transform .2s ease,border-color .15s;position:relative;z-index:1;touch-action:pan-y;user-select:none;}
 .acc-row:hover,.acc-row.active{border-color:var(--pu4);background:var(--card2);}
 .acc-row.active{border-color:var(--pu6);box-shadow:0 0 0 1px var(--pu6);}
 .acc-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
@@ -101,14 +107,32 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-cur{font-size:11px;color:var(--txt3);}
 .acc-bal{font-size:15px;font-weight:600;text-align:right;color:var(--txt);}
 .acc-bal-cur{font-size:11px;color:var(--txt3);text-align:right;}
-.acc-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
-.acc-row:hover .acc-actions{opacity:1;}
-.acc-btn{background:var(--bg3);border:0.5px solid var(--border);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:all .15s;color:var(--txt3);}
-.acc-btn:hover{background:var(--card);border-color:var(--border2);}
-.acc-btn.edit:hover{color:var(--pu6);border-color:var(--pu6);}
-.acc-btn.delete:hover{color:var(--red);border-color:var(--red);}
 .cal-day:not(.other){cursor:pointer}
 .cal-day:not(.other):hover{background:var(--bg3)}
+
+/* ── SWIPE-TO-ACT OPERATIONS LIST ── */
+.ev-list-head{display:grid;grid-template-columns:34% 16% 18% 32%;padding:9px 13px;background:var(--card2);font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;border-bottom:0.5px solid var(--border);}
+.ev-list{background:var(--card);}
+.ev-row-wrap{position:relative;overflow:hidden;border-top:0.5px solid var(--border);}
+.ev-row-wrap:first-child{border-top:none;}
+.ev-row-actions{position:absolute;top:0;right:0;bottom:0;display:flex;}
+.ev-row-actions button{width:60px;border:none;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;cursor:pointer;flex-shrink:0;}
+.ev-row-actions .act-edit{background:var(--pu6);}
+.ev-row-actions .act-del{background:var(--red);}
+.ev-row-content{display:grid;grid-template-columns:34% 16% 18% 32%;align-items:center;padding:11px 13px;background:var(--card);position:relative;z-index:1;touch-action:pan-y;user-select:none;transition:transform .2s ease;}
+.ev-col-name{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--txt);overflow:hidden;}
+.ev-col-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ev-col-rep{text-align:center;}
+.ev-col-amt{text-align:right;font-size:13px;font-weight:500;}
+.ev-col-acc{font-size:11px;color:var(--pu4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:8px;}
+
+/* ── SWIPE-TO-ACT: day events modal (same mechanic as operations list) ── */
+.dayev-row-wrap{position:relative;overflow:hidden;border-radius:var(--r-sm);}
+.dayev-row-actions{position:absolute;top:0;right:0;bottom:0;display:flex;}
+.dayev-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
+.dayev-row-actions .dayev-edit{background:var(--pu6);}
+.dayev-row-actions .dayev-del{background:var(--red);}
+.dayev-row-content{position:relative;z-index:1;background:var(--card);touch-action:pan-y;user-select:none;transition:transform .2s ease;border-radius:var(--r-sm);}
 
 .txn-list{display:flex;flex-direction:column;gap:7px;}
 .txn-row{display:flex;align-items:center;gap:10px;}
@@ -551,18 +575,10 @@ tr:hover .del-row-btn{opacity:1;}
         <span class="ev-table-title">Всі операції</span>
         <button class="ev-add-btn" onclick="openAddEvent()">+ Нова подія</button>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width:33%">Назва</th>
-            <th style="width:19%">ПОВТОРЕННЯ</th>
-            <th style="width:18%" class="r">Сума</th>
-            <th style="width:20%">Рахунок</th>
-            <th style="width:10%"></th>
-          </tr>
-        </thead>
-        <tbody id="evTable"></tbody>
-      </table>
+      <div class="ev-list-head">
+        <span>Назва</span><span style="text-align:center">Повтор</span><span style="text-align:right">Сума</span><span style="text-align:center;padding-left:8px">Рахунок</span>
+      </div>
+      <div id="evTable" class="ev-list"></div>
     </div>
     <div class="panel" style="margin-top:14px">
       <div class="panel-hdr">
@@ -658,7 +674,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.3.9</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.4.1</span>
     </div>
 
     <!-- Курси валют -->
@@ -844,7 +860,7 @@ tr:hover .del-row-btn{opacity:1;}
 <!-- MODAL: ADD EVENT -->
 <div class="modal-bg hidden" id="modalEvent">
   <div class="modal" style="max-width:400px">
-    <div class="modal-title">Нова подія <div class="close-x" onclick="closeModal('modalEvent')">✕</div></div>
+    <div class="modal-title"><span id="evModalTitle">Нова подія</span> <div class="close-x" onclick="closeModal('modalEvent')">✕</div></div>
     <input type="hidden" id="mEvAssetId" value=""/>
     <div class="toggle-bar">
       <div class="tog on-in" id="togEvIn" onclick="setEvType('income')">↙ Надходження</div>
@@ -872,7 +888,7 @@ tr:hover .del-row-btn{opacity:1;}
     </div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="closeModal('modalEvent')">Скасувати</button>
-      <button class="btn btn-primary" onclick="saveEvent()">Додати</button>
+      <button class="btn btn-primary" id="evSaveBtn" onclick="saveEvent()">Додати</button>
     </div>
   </div>
 </div>
@@ -987,6 +1003,23 @@ tr:hover .del-row-btn{opacity:1;}
     </div>
     <div id="dayEvList" class="txn-list" style="max-height:350px;overflow-y:auto;margin-bottom:10px"></div>
     <button class="btn btn-primary" style="width:100%;margin-bottom:6px" id="dayEvAddBtn" onclick="addEventForDay()">+ Нова подія</button>
+  </div>
+</div>
+
+<!-- MODAL: EDIT TRANSACTION -->
+<div class="modal-bg hidden" id="modalEditTxn">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">Редагувати операцію <div class="close-x" onclick="closeModal('modalEditTxn')">✕</div></div>
+    <input type="hidden" id="etId" value=""/>
+    <div class="field"><label>Опис</label><input id="etDesc" placeholder="опис"/></div>
+    <div class="frow">
+      <div class="field"><label>Сума</label><input type="number" id="etAmt" placeholder="0.00"/></div>
+      <div class="field"><label>Дата</label><input type="date" id="etDate"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('modalEditTxn')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveEditTxn()">Зберегти</button>
+    </div>
   </div>
 </div>
 
@@ -1120,7 +1153,7 @@ async function loadST(){
 }
 
 function saveST(){
-  Users.save().catch(e=>console.warn('[ST] Users.save failed:',e));
+  Users.save(ST).catch(e=>console.warn('[ST] Users.save failed:',e));
 }
 
 async function syncToServer(){
@@ -1128,7 +1161,7 @@ async function syncToServer(){
   if(!btn)return;
   btn.classList.add('syncing');
   try{
-    const ok=await Users.save();
+    const ok=await Users.save(ST);
     if(ok){
       toast('✅ Дані синхронізовано з сервером');
     }else{
@@ -1194,7 +1227,7 @@ async function authRegister(){
     if(legacy&&legacy.accounts){
       ST={...ST,...legacy};
       ensureST();
-      await Users.save();
+      await Users.save(ST);
     }
     Users.removeLegacyData();
   }
@@ -1217,7 +1250,7 @@ async function authGoogleLogin(){
     if(legacy&&legacy.accounts){
       ST={...ST,...legacy};
       ensureST();
-      await Users.save();
+      await Users.save(ST);
     }
     Users.removeLegacyData();
   }else{
@@ -1549,15 +1582,19 @@ function renderAccounts(){
   const ul=document.getElementById('accList');
   if(!ST.accounts.length){ul.innerHTML='<div style="color:var(--txt3);font-size:13px;text-align:center;padding:20px">Рахунків ще немає</div>';return;}
   ul.innerHTML=ST.accounts.map((a,i)=>`
-    <div class="acc-row${ST.selAcc===i?' active':''}" onclick="selectAcc(${i})">
-      <div class="acc-ico" style="background:${a.color}22;color:${a.color}">${renderIcon(a.icon||a.emoji)}</div>
-      <div class="acc-info"><div class="acc-name">${stripIconPrefix(a.name)}</div><div class="acc-cur">${a.currency}</div></div>
-      <div><div class="acc-bal">${fmt(a.balance,a.currency)}</div><div class="acc-bal-cur">${a.currency}</div></div>
-      <div class="acc-actions">
-        <button class="acc-btn edit" onclick="event.stopPropagation();editAccount('${a.id}')" title="Редагувати"><i class="ti ti-pencil"></i></button>
-        <button class="acc-btn delete" onclick="event.stopPropagation();deleteAccount('${a.id}')" title="Видалити"><i class="ti ti-trash"></i></button>
+    <div class="acc-row-wrap">
+      <div class="acc-row-actions">
+        <button class="acc-act-add" data-idx="${i}" title="Додати операцію"><i class="ti ti-plus"></i></button>
+        <button class="acc-act-edit" data-id="${a.id}" title="Редагувати"><i class="ti ti-pencil"></i></button>
+        <button class="acc-act-del" data-id="${a.id}" title="Видалити"><i class="ti ti-trash"></i></button>
+      </div>
+      <div class="acc-row${ST.selAcc===i?' active':''}" onclick="selectAcc(${i})">
+        <div class="acc-ico" style="background:${a.color}22;color:${a.color}">${renderIcon(a.icon||a.emoji)}</div>
+        <div class="acc-info"><div class="acc-name">${stripIconPrefix(a.name)}</div><div class="acc-cur">${a.currency}</div></div>
+        <div><div class="acc-bal">${fmt(a.balance,a.currency)}</div><div class="acc-bal-cur">${a.currency}</div></div>
       </div>
     </div>`).join('');
+  initAccSwipe();
   // hero
   const uah=ST.accounts.filter(a=>a.currency==='UAH').reduce((s,a)=>s+a.balance,0);
   const usd=ST.accounts.filter(a=>a.currency==='USD').reduce((s,a)=>s+a.balance,0);
@@ -2081,6 +2118,9 @@ function deleteAssetTxn(txnId,assetId){
    CALENDAR
 ═══════════════════════════════════════════ */
 function openAddEvent(){
+  editEventId=null;
+  document.getElementById('evModalTitle').textContent='Нова подія';
+  document.getElementById('evSaveBtn').textContent='Додати';
   selEvType='income';
   document.getElementById('togEvIn').className='tog on-in';
   document.getElementById('togEvOut').className='tog';
@@ -2101,12 +2141,25 @@ function saveEvent(){
   const date=document.getElementById('mEvDate').value;
   const currency=document.getElementById('mEvCurrency').value;
   if(!name||!date){toast('Заповніть назву та дату',false);return;}
+  if(editEventId){
+    const e=ST.events.find(x=>x.id===editEventId);
+    if(e){
+      Object.assign(e,{type:selEvType,name,amount:amt,currency,date,
+        repeat:document.getElementById('mEvRepeat').value,
+        accId:document.getElementById('mEvAcc').value});
+    }
+    editEventId=null;
+    saveST(); refreshAll(); renderCalendar(); closeModal('modalEvent'); toast('Подію оновлено!');
+    return;
+  }
   ST.events.push({id:uid(),type:selEvType,name,amount:amt,currency,date,
     repeat:document.getElementById('mEvRepeat').value,
     accId:document.getElementById('mEvAcc').value,
     assetId:document.getElementById('mEvAssetId')?document.getElementById('mEvAssetId').value:''});
-  saveST(); renderCalendar(); closeModal('modalEvent'); toast('Подію додано!');
+  saveST(); refreshAll(); renderCalendar(); closeModal('modalEvent'); toast('Подію додано!');
 }
+
+let editEventId=null;
 
 let dayEvDate='';
 
@@ -2209,7 +2262,7 @@ function renderUpcoming(){
 }
 
 function renderEvTable(){
-  const tbody=document.getElementById('evTable');
+  const wrap=document.getElementById('evTable');
   const all=ST.events.map(e=>({...e,source:'event'}));
   ST.transactions.forEach(t=>{
     const acc=t.accId?ST.accounts.find(a=>a.id===t.accId):null;
@@ -2220,18 +2273,24 @@ function renderEvTable(){
     });
   });
   all.sort((a,b)=>b.date.localeCompare(a.date));
-  if(!all.length){tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--txt3);font-size:13px">Операцій ще немає</td></tr>`;return;}
-  tbody.innerHTML=all.slice(0,40).map(e=>`
-    <tr>
-      <td><div style="display:flex;align-items:center;gap:7px">
-        <div style="width:6px;height:6px;border-radius:50%;background:${e.type==='income'?'var(--gr2)':'var(--or2)'};flex-shrink:0"></div>
-        ${e.name}
-      </div></td>
-      <td><span class="badge ${e.repeat!=='once'?'badge-rep':e.type==='income'?'badge-in':'badge-out'}">${e.source==='event'&&e.repeat!=='once'?REP_LABELS[e.repeat]:'Раз'}</span></td>
-      <td class="r ${e.type==='income'?'val-pos':'val-neg'}">${e.type==='income'?'+':'-'}${fmt(e.amount,e.currency||e.accCur||'UAH')}</td>
-      <td style="font-size:11px;color:var(--pu4)">${e.accName||''}</td>
-      <td>${e.source==='event'?`<button class="del-row-btn" onclick="deleteEvent('${e.id}')" style="opacity:1">✕</button>`:''}</td>
-    </tr>`).join('');
+  if(!all.length){wrap.innerHTML=`<div style="text-align:center;padding:22px;color:var(--txt3);font-size:13px">Операцій ще немає</div>`;return;}
+  wrap.innerHTML=all.slice(0,40).map(e=>`
+    <div class="ev-row-wrap">
+      <div class="ev-row-actions">
+        <button class="act-edit" data-id="${e.id}" data-src="${e.source}" title="Редагувати"><i class="ti ti-pencil"></i></button>
+        <button class="act-del" data-id="${e.id}" data-src="${e.source}" title="Видалити"><i class="ti ti-trash"></i></button>
+      </div>
+      <div class="ev-row-content">
+        <div class="ev-col-name">
+          <div style="width:6px;height:6px;border-radius:50%;background:${e.type==='income'?'var(--gr2)':'var(--or2)'};flex-shrink:0"></div>
+          <span>${e.name}</span>
+        </div>
+        <div class="ev-col-rep"><span class="badge ${e.repeat!=='once'?'badge-rep':e.type==='income'?'badge-in':'badge-out'}">${e.source==='event'&&e.repeat!=='once'?REP_LABELS[e.repeat]:'Раз'}</span></div>
+        <div class="ev-col-amt ${e.type==='income'?'val-pos':'val-neg'}">${e.type==='income'?'+':'-'}${fmt(e.amount,e.currency||e.accCur||'UAH')}</div>
+        <div class="ev-col-acc">${e.accName||''}</div>
+      </div>
+    </div>`).join('');
+  initEvSwipe();
 }
 function deleteEvent(id){
   showConfirm('Видалити цю подію?',()=>{
@@ -2239,6 +2298,162 @@ function deleteEvent(id){
     saveST();renderCalendar();toast('Подію видалено');
   });
 }
+function deleteTxnGlobal(id){
+  showConfirm('Видалити цю операцію?',()=>{
+    const t=ST.transactions.find(x=>x.id===id);
+    if(t){const acc=ST.accounts.find(a=>a.id===t.accId);if(acc)acc.balance-=t.amount;}
+    ST.transactions=ST.transactions.filter(x=>x.id!==id);
+    saveST();refreshAll();renderCalendar();toast('Операцію видалено');
+  });
+}
+
+function openEditEvent(id){
+  const e=ST.events.find(x=>x.id===id);
+  if(!e)return;
+  editEventId=id;
+  selEvType=e.type;
+  document.getElementById('togEvIn').className='tog'+(e.type==='income'?' on-in':'');
+  document.getElementById('togEvOut').className='tog'+(e.type==='expense'?' on-out':'');
+  document.getElementById('mEvName').value=e.name||'';
+  document.getElementById('mEvAmt').value=e.amount||'';
+  document.getElementById('mEvDate').value=e.date||today();
+  document.getElementById('mEvCurrency').value=e.currency||'UAH';
+  syncAccSelects();
+  document.getElementById('mEvAcc').value=e.accId||'';
+  document.getElementById('mEvRepeat').value=e.repeat||'once';
+  document.getElementById('evModalTitle').textContent='Редагувати подію';
+  document.getElementById('evSaveBtn').textContent='Зберегти';
+  openModal('modalEvent');
+}
+
+function openEditTxn(id){
+  const t=ST.transactions.find(x=>x.id===id);
+  if(!t)return;
+  document.getElementById('etId').value=t.id;
+  document.getElementById('etDesc').value=t.desc||t.cat||'';
+  document.getElementById('etAmt').value=Math.abs(t.amount);
+  document.getElementById('etDate').value=t.date;
+  openModal('modalEditTxn');
+}
+
+function saveEditTxn(){
+  const id=document.getElementById('etId').value;
+  const t=ST.transactions.find(x=>x.id===id);
+  if(!t)return;
+  const newAmtAbs=parseFloat(document.getElementById('etAmt').value);
+  if(!newAmtAbs||newAmtAbs<=0){toast('Вкажіть коректну суму',false);return;}
+  const sign=t.amount<0?-1:1;
+  const newAmount=sign*newAmtAbs;
+  const acc=ST.accounts.find(a=>a.id===t.accId);
+  if(acc){acc.balance-=t.amount;acc.balance+=newAmount;}
+  t.amount=newAmount;
+  const desc=document.getElementById('etDesc').value.trim();
+  if(desc)t.desc=desc;
+  const date=document.getElementById('etDate').value;
+  if(date)t.date=date;
+  saveST();refreshAll();renderCalendar();closeModal('modalEditTxn');toast('Операцію оновлено!');
+}
+
+/* swipe-to-reveal actions (generalized — used by #evTable, #dayEvList and #accList) */
+let evSwipeOpenEl=null;
+const EV_ACT_W=120;
+const DAYEV_ACT_W=108;
+const ACC_ACT_W=162;
+const SWIPE_CONTENT_SELECTORS=['.ev-row-content','.dayev-row-content','.acc-row'];
+const SWIPE_WRAP_SELECTORS=['.ev-row-wrap','.dayev-row-wrap','.acc-row-wrap'];
+function initSwipeRows(rowSelector,actWidth){
+  document.querySelectorAll(rowSelector).forEach(el=>{
+    let startX=0,startY=0,curX=0,dragging=false,locked=null,wasOpen=false;
+    el.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse'&&e.button!==0)return;
+      startX=e.clientX;startY=e.clientY;curX=el.classList.contains('open')?-actWidth:0;
+      dragging=true;locked=null;wasOpen=el.classList.contains('open');
+      el.style.transition='none';
+      try{el.setPointerCapture(e.pointerId);}catch(err){}
+    });
+    el.addEventListener('pointermove',e=>{
+      if(!dragging)return;
+      const dx=e.clientX-startX;
+      const dy=e.clientY-startY;
+      if(locked===null){
+        if(Math.abs(dx)>6||Math.abs(dy)>6)locked=Math.abs(dx)>Math.abs(dy)?'x':'y';
+      }
+      if(locked!=='x')return;
+      const base=wasOpen?-actWidth:0;
+      let nx=base+dx;
+      if(nx>0)nx=0;
+      if(nx<-actWidth-24)nx=-actWidth-24;
+      curX=nx;
+      el.style.transform=`translateX(${curX}px)`;
+    });
+    const endDrag=()=>{
+      if(!dragging)return;
+      dragging=false;
+      el.style.transition='transform .2s ease';
+      if(locked==='x'){
+        if(curX<-actWidth/2)openSwipeRow(el,actWidth,rowSelector);else closeSwipeRow(el);
+      }
+      locked=null;
+    };
+    el.addEventListener('pointerup',endDrag);
+    el.addEventListener('pointercancel',endDrag);
+  });
+}
+function openSwipeRow(el,actWidth,rowSelector){
+  closeAllSwipeRows(rowSelector,el);
+  el.classList.add('open');
+  el.style.transform=`translateX(-${actWidth}px)`;
+  evSwipeOpenEl=el;
+}
+function closeSwipeRow(el){
+  el.classList.remove('open');
+  el.style.transform='translateX(0)';
+  if(evSwipeOpenEl===el)evSwipeOpenEl=null;
+}
+function closeAllSwipeRows(rowSelector,except){
+  document.querySelectorAll(rowSelector+'.open').forEach(el=>{if(el!==except)closeSwipeRow(el);});
+}
+function closeAllSwipeRowsEverywhere(){
+  SWIPE_CONTENT_SELECTORS.forEach(sel=>closeAllSwipeRows(sel));
+}
+function initEvSwipe(){initSwipeRows('#evTable .ev-row-content',EV_ACT_W);}
+function initDayEvSwipe(){initSwipeRows('#dayEvList .dayev-row-content',DAYEV_ACT_W);}
+function initAccSwipe(){initSwipeRows('#accList .acc-row',ACC_ACT_W);}
+document.addEventListener('pointerdown',e=>{
+  if(!evSwipeOpenEl)return;
+  const insideOpenWrap=SWIPE_WRAP_SELECTORS.some(sel=>e.target.closest(sel));
+  if(!insideOpenWrap)closeAllSwipeRowsEverywhere();
+});
+document.getElementById('evTable')&&document.getElementById('evTable').addEventListener('click',e=>{
+  const editBtn=e.target.closest('.act-edit');
+  const delBtn=e.target.closest('.act-del');
+  if(!editBtn&&!delBtn)return;
+  const btn=editBtn||delBtn;
+  const id=btn.dataset.id,src=btn.dataset.src;
+  closeAllSwipeRows('.ev-row-content');
+  if(editBtn){src==='event'?openEditEvent(id):openEditTxn(id);}
+  else{src==='event'?deleteEvent(id):deleteTxnGlobal(id);}
+});
+document.getElementById('dayEvList')&&document.getElementById('dayEvList').addEventListener('click',e=>{
+  const editBtn=e.target.closest('.dayev-edit');
+  const delBtn=e.target.closest('.dayev-del');
+  if(!editBtn&&!delBtn)return;
+  const btn=editBtn||delBtn;
+  const id=btn.dataset.id,src=btn.dataset.src;
+  closeAllSwipeRows('.dayev-row-content');
+  if(editBtn){src==='event'?openEditEvent(id):openEditTxn(id);}
+  else{src==='event'?deleteEvent(id):deleteTxnGlobal(id);}
+});
+document.getElementById('accList')&&document.getElementById('accList').addEventListener('click',e=>{
+  const addBtn=e.target.closest('.acc-act-add');
+  const editBtn=e.target.closest('.acc-act-edit');
+  const delBtn=e.target.closest('.acc-act-del');
+  if(!addBtn&&!editBtn&&!delBtn)return;
+  closeAllSwipeRows('.acc-row');
+  if(addBtn){selectAcc(parseInt(addBtn.dataset.idx,10));}
+  else if(editBtn){editAccount(editBtn.dataset.id);}
+  else{deleteAccount(delBtn.dataset.id);}
+});
 
 async function showDayEvents(ds){
   dayEvDate=ds;
@@ -2251,13 +2466,19 @@ async function showDayEvents(ds){
     list.innerHTML=all.map(e=>{
       const pos=e.type==='income';
       const isEvent=e.source==='event';
-      return `<div class="txn-row" style="position:relative">
-        ${isEvent?`<button onclick="deleteEvent('${e.id}')" style="position:absolute;right:6px;top:6px;background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px">✕</button>`:''}
-        <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(e.icon||'ti-calendar')}</div>
-        <div class="txn-info"><div class="txn-desc">${e.name}</div><div class="txn-meta">${e.cat||''}${e.accName?' · '+e.accName:''}${isEvent&&e.repeat!=='once'?' · '+REP_LABELS[e.repeat]:''}</div></div>
-        <div class="txn-amt ${pos?'pos':'neg'}">${pos?'+':'-'}${fmt(e.amount,e.currency||e.accCur||'UAH')}</div>
+      return `<div class="dayev-row-wrap">
+        <div class="dayev-row-actions">
+          <button class="dayev-edit" data-id="${e.id}" data-src="${e.source}" title="Редагувати"><i class="ti ti-pencil"></i></button>
+          <button class="dayev-del" data-id="${e.id}" data-src="${e.source}" title="Видалити"><i class="ti ti-trash"></i></button>
+        </div>
+        <div class="dayev-row-content txn-row" style="padding:6px 2px">
+          <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(e.icon||'ti-calendar')}</div>
+          <div class="txn-info"><div class="txn-desc">${e.name}</div><div class="txn-meta">${e.cat||''}${e.accName?' · '+e.accName:''}${isEvent&&e.repeat!=='once'?' · '+REP_LABELS[e.repeat]:''}</div></div>
+          <div class="txn-amt ${pos?'pos':'neg'}">${pos?'+':'-'}${fmt(e.amount,e.currency||e.accCur||'UAH')}</div>
+        </div>
       </div>`;
     }).join('');
+    initDayEvSwipe();
   }
   const rates=await fetchNBURates(ds);
   const ratesBody=document.getElementById('dayEvRatesBody');
@@ -2734,7 +2955,7 @@ async function importAllData(input){
       ST.categories=data.categories||{expense:[],income:[]};
       ST.selAcc=null;
       
-      await Users.save();
+      await Users.save(ST);
       refreshAll();
       syncCategorySelects();
       loadSettingsRates();
