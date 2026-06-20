@@ -124,21 +124,23 @@ const Firebase = (() => {
   // ═══ USER DOCUMENT (тільки власний, по uid) ═══
 
   // Отримати дані ТІЛЬКИ поточного користувача
-  async function getCurrentUserData() {
+  async function getCurrentUserData(retries = 2) {
     if (!_ready || !_currentUser) {
       console.warn('[Firebase] getCurrentUserData skipped: не готово/не авторизовано');
-      return null;
+      return undefined;
     }
-    try {
-      console.log('[Firebase] Fetching own data from Firestore...');
-      const doc = await _db.collection('users').doc(_currentUser.uid).get();
-      if (doc.exists) {
-        return doc.data();
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        console.log('[Firebase] Fetching own data from Firestore... (спроба', attempt + 1, ')');
+        const doc = await _db.collection('users').doc(_currentUser.uid).get();
+        return doc.exists ? doc.data() : null;
+      } catch (e) {
+        console.warn(`[Firebase] getCurrentUserData помилка (спроба ${attempt + 1}):`, e.message);
+        if (attempt === retries) {
+          throw e;
+        }
+        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
       }
-      return null;
-    } catch (e) {
-      console.warn('[Firebase] getCurrentUserData error:', e.message);
-      return null;
     }
   }
 

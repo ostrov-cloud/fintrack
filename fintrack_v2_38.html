@@ -1165,9 +1165,13 @@ async function authLogin(){
   if(!result.ok){err.textContent=result.error;return;}
   
   const data = await Users.loadOrCreateData();
-  if(data){ ST={...ST,...data}; }
-  ensureST();
-  hideAuthScreen();
+  if(data){
+    ST={...ST,...data};
+    ensureST();
+    hideAuthScreen();
+  }else{
+    err.textContent='Помилка завантаження даних. Спробуйте ще раз';
+  }
 }
 
 async function authRegister(){
@@ -1218,7 +1222,11 @@ async function authGoogleLogin(){
     Users.removeLegacyData();
   }else{
     const data = await Users.loadOrCreateData();
-    if(data){ ST={...ST,...data}; }
+    if(!data){
+      err.textContent='Помилка завантаження даних. Спробуйте ще раз';
+      return;
+    }
+    ST={...ST,...data};
   }
   
   ensureST();
@@ -2780,8 +2788,9 @@ function refreshAll(){renderAccounts();renderAssets();}
         ensureST();
         console.log('[Init] Auto-login successful, data loaded from Firestore');
       }else{
-        ensureST();
-        await showAuthScreen().catch(()=>{});
+        // null = помилка читання (мережа/таймінг), а НЕ "користувача нема"
+        console.error('[Init] Не вдалося завантажити дані. Спробуйте оновити сторінку.');
+        toast('Помилка завантаження даних. Перезавантажте сторінку', false);
         hideLoad();
         return;
       }

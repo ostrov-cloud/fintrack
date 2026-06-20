@@ -42,8 +42,17 @@ const Users = {
 
   // Завантажити дані користувача з Firestore, якщо немає — створити порожні
   async loadOrCreateData(){
-    let data = await Firebase.getCurrentUserData();
-    if(!data){
+    let data;
+    try{
+      data = await Firebase.getCurrentUserData();
+    }catch(e){
+      // Помилка читання (мережа/таймінг) — НЕ перезаписуємо дані порожніми!
+      console.error('[Users] Не вдалося завантажити дані з Firestore:', e.message);
+      return null;
+    }
+
+    if(data === null){
+      // Документ СПРАВДІ не існує — це новий користувач
       data = this.emptyST();
       await Firebase.saveCurrentUserData(data);
       console.log('[Users] Створено новий документ даних для користувача');
