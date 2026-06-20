@@ -1,8 +1,9 @@
 // FinTrack Service Worker — PWA
-const CACHE='fintrack-v2';
+const CACHE='fintrack-v3';
 const ASSETS=[
   './',
   './index.html',
+  './fintrack_v2_38.html',
   './firebase.js',
   './users.js',
   './rates.json',
@@ -16,7 +17,6 @@ const ASSETS=[
   './libs/Roboto-Regular.ttf'
 ];
 
-// Install: кешуємо статичні ресурси
 self.addEventListener('install',e=>{
   e.waitUntil(
     caches.open(CACHE).then(cache=>cache.addAll(ASSETS))
@@ -24,7 +24,6 @@ self.addEventListener('install',e=>{
   self.skipWaiting();
 });
 
-// Activate: очищаємо старі кеші
 self.addEventListener('activate',e=>{
   e.waitUntil(
     caches.keys().then(keys=>Promise.all(
@@ -34,23 +33,19 @@ self.addEventListener('activate',e=>{
   self.clients.claim();
 });
 
-// Fetch: Network First → Cache Fallback
 self.addEventListener('fetch',e=>{
-  // Пропускаємо не-GET запити та chrome-extension
   if(e.request.method!=='GET')return;
   
   e.respondWith(
     fetch(e.request).then(response=>{
-      // Кешуємо успішні відповіді
       if(response.ok&&response.type==='basic'){
         const clone=response.clone();
         caches.open(CACHE).then(cache=>cache.put(e.request,clone));
       }
       return response;
     }).catch(()=>{
-      // Офлайн: повертаємо з кешу
       return caches.match(e.request).then(cached=>{
-        return cached||caches.match('./index.html');
+        return cached||caches.match('./fintrack_v2_38.html');
       });
     })
   );
