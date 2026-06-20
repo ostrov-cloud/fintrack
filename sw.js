@@ -1,21 +1,19 @@
 // FinTrack Service Worker — PWA
-const CACHE='fintrack-v1';
+const CACHE='fintrack-v2';
 const ASSETS=[
-  '/',
-  '/fintrack_v2_38.html',
-  '/index.html',
-  '/db.js',
-  '/crypto.js',
-  '/users.js',
-  '/rates.json',
-  '/libs/chart.umd.min.js',
-  '/libs/pdfmake.min.js',
-  '/libs/vfs_fonts.js',
-  '/libs/tabler-icons.min.css',
-  '/libs/fonts/tabler-icons.ttf',
-  '/libs/fonts/tabler-icons.woff',
-  '/libs/fonts/tabler-icons.woff2',
-  '/libs/Roboto-Regular.ttf'
+  './',
+  './index.html',
+  './firebase.js',
+  './users.js',
+  './rates.json',
+  './libs/chart.umd.min.js',
+  './libs/pdfmake.min.js',
+  './libs/vfs_fonts.js',
+  './libs/tabler-icons.min.css',
+  './libs/fonts/tabler-icons.ttf',
+  './libs/fonts/tabler-icons.woff',
+  './libs/fonts/tabler-icons.woff2',
+  './libs/Roboto-Regular.ttf'
 ];
 
 // Install: кешуємо статичні ресурси
@@ -52,7 +50,7 @@ self.addEventListener('fetch',e=>{
     }).catch(()=>{
       // Офлайн: повертаємо з кешу
       return caches.match(e.request).then(cached=>{
-        return cached||caches.match('/fintrack_v2_38.html');
+        return cached||caches.match('./index.html');
       });
     })
   );
