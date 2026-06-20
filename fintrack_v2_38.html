@@ -1105,9 +1105,8 @@ function ensureST(){
 
 // Завантаження даних і legacy-міграція при старті
 async function loadST(){
-  // Якщо користувач авторизований — завантажуємо з Firestore через loadOrCreateData
-  if(Users.isLoggedIn()){
-    try{
+  try{
+    if(Users.isLoggedIn()){
       const data = await Users.loadOrCreateData();
       if(data){
         ST={...ST,...data};
@@ -1115,22 +1114,8 @@ async function loadST(){
         console.log('[ST] Завантажено з Firestore');
         return;
       }
-    }catch(e){console.warn('[ST] Firestore load failed:',e);}
-  }
-  
-  // Legacy міграція: якщо є старі дані в localStorage — переносимо в Firestore
-  if(Users.isLoggedIn() && Users.hasLegacyData()){
-    const legacy = Users.getLegacyData();
-    if(legacy && legacy.accounts){
-      ST = {...ST, ...legacy};
-      ensureST();
-      await Users.save();
-      Users.removeLegacyData();
-      console.log('[ST] Legacy ft3 дані мігровано у Firestore');
-      return;
     }
-  }
-  
+  }catch(e){console.warn('[ST] Firestore load failed:',e);}
   ensureST();
 }
 
@@ -2771,15 +2756,14 @@ function closeConfirm(){
 function refreshAll(){renderAccounts();renderAssets();}
 (async function init(){
   const hideLoad=()=>{const ls=document.getElementById('loadScreen');if(ls)ls.classList.add('hide');};
-  // ⚡ Аварійний таймаут: якщо ініціалізація зависла — примусово ховаємо loading screen через 15с
   const forceHideTimer=setTimeout(()=>{console.warn('[Init] Force hide loading screen after timeout');hideLoad();},15000);
   try{
     await Firebase.init().catch(()=>{});
-    await loadST();
 
     const fbUser = await Firebase.waitForAuthInit();
 
     if(!fbUser){
+      ensureST();
       // Показуємо екран входу
       await showAuthScreen().catch(()=>{});
       hideLoad();
@@ -2787,9 +2771,11 @@ function refreshAll(){renderAccounts();renderAssets();}
       // Firebase Auth сам відновив сесію — завантажуємо дані
       const data = await Users.loadOrCreateData();
       if(data){
+        ST={...ST,...data};
         ensureST();
         console.log('[Init] Auto-login successful, data loaded from Firestore');
       }else{
+        ensureST();
         await showAuthScreen().catch(()=>{});
         hideLoad();
         return;
