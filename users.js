@@ -104,9 +104,9 @@ const Users = {
   },
 
   // Зберегти поточний ST у Firestore (викликати після кожної зміни даних)
-  async save(){
-    if(!window.ST) return false;
-    return await Firebase.saveCurrentUserData(window.ST);
+  async save(data){
+  if(!data) return false;
+  return await Firebase.saveCurrentUserData(data);
   },
 
   // Змінити пароль (працює тільки для email/password акаунтів)
