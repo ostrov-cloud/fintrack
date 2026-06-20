@@ -1164,6 +1164,8 @@ async function authLogin(){
   const result=await Users.login(email,password);
   if(!result.ok){err.textContent=result.error;return;}
   
+  const data = await Users.loadOrCreateData();
+  if(data){ ST={...ST,...data}; }
   ensureST();
   hideAuthScreen();
 }
@@ -1214,6 +1216,9 @@ async function authGoogleLogin(){
       await Users.save();
     }
     Users.removeLegacyData();
+  }else{
+    const data = await Users.loadOrCreateData();
+    if(data){ ST={...ST,...data}; }
   }
   
   ensureST();
