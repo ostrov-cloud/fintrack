@@ -43,7 +43,6 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .topbar{padding:12px 22px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:rgba(255,255,255,.75);backdrop-filter:blur(12px);}
 .topbar-title{font-size:16px;font-weight:600;color:var(--txt);}
 .topbar-right{display:flex;align-items:center;gap:10px;}
-.date-chip{font-size:12px;color:var(--txt2);background:var(--card2);border:0.5px solid var(--border);border-radius:20px;padding:4px 10px;}
 .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--pu6),var(--or4));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;cursor:pointer;}
 .sync-btn{width:32px;height:32px;border-radius:50%;background:var(--card2);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--txt2);cursor:pointer;transition:all .2s;}
 .sync-btn:hover{background:var(--pu4);color:#fff;border-color:var(--pu4);}
@@ -277,6 +276,7 @@ tr:hover .del-row-btn{opacity:1;}
 .field label{display:block;font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
 .field input,.field select,.field textarea{width:100%;background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;color:var(--txt);font-size:16px;outline:none;font-family:inherit;}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pu6);}
+.field input[type="date"]{font-size:13px;padding:9px 8px;}
 .field select option{background:var(--card);}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .section-sep{border:none;border-top:0.5px solid var(--border);margin:14px 0;}
@@ -388,7 +388,6 @@ tr:hover .del-row-btn{opacity:1;}
   .hero-amount{font-size:26px;}
   .tbl-wrap{display:none;}
   .asset-cards{display:flex;}
-  .sync-chip-label-text{display:none;}
 
   /* Збільшена нижня навігація — легше потрапити пальцем */
   .bottom-nav{padding:8px 4px env(safe-area-inset-bottom,10px) 4px;}
@@ -398,13 +397,12 @@ tr:hover .del-row-btn{opacity:1;}
   .fab{bottom:112px;}
   .fab-menu{bottom:172px;}
 
-  /* Топбар на вузьких екранах (iPhone 12 та подібні): дату видно, чіп синхронізації більший */
+  /* Топбар на вузьких екранах: чіп синхронізації показує повний читабельний статус */
   .topbar{padding:10px 14px;}
   .topbar-title{font-size:15px;}
-  .topbar-right{gap:7px;}
-  .date-chip{font-size:14px;font-weight:500;padding:6px 12px;white-space:nowrap;}
-  .sync-chip{padding:10px;border-radius:50%;}
-  .sync-chip-ico{font-size:24px;}
+  .topbar-right{gap:7px;justify-content:flex-start;}
+  .sync-chip{padding:8px 13px;font-size:13px;gap:7px;}
+  .sync-chip-ico{font-size:17px;}
 }
 /* ── LOADING SCREEN ── */
 .load-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1a1040 0%,#2d1b69 25%,#4b2d8a 50%,#6b3fa0 75%,#1a1040 100%);background-size:400% 400%;animation:bgShift 12s ease infinite;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s,visibility .5s;}
@@ -479,7 +477,6 @@ tr:hover .del-row-btn{opacity:1;}
   <div class="topbar">
     <div class="topbar-title" id="topbarTitle">Рахунки</div>
     <div class="topbar-right">
-      <div class="date-chip" id="datechip"></div>
       <div class="sync-chip st-synced" id="syncChip" onclick="syncToServer()" title="Натисніть, щоб синхронізувати вручну">
         <span class="sync-chip-ico" id="syncChipIco"><i class="ti ti-circle-check"></i></span>
         <span id="syncChipLabel" class="sync-chip-label-text">Синхронізовано</span>
@@ -609,7 +606,11 @@ tr:hover .del-row-btn{opacity:1;}
 
     <div class="ev-table-wrap">
       <div class="ev-table-hdr">
-        <span class="ev-table-title">Всі операції</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button onclick="calMove(-1)" style="background:var(--card);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:13px;color:var(--txt2);cursor:pointer;">←</button>
+          <span class="ev-table-title" id="evTableMonthLabel">Операції за місяць</span>
+          <button onclick="calMove(1)" style="background:var(--card);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:13px;color:var(--txt2);cursor:pointer;">→</button>
+        </div>
         <button class="ev-add-btn" onclick="openAddEvent()">+ Нова подія</button>
       </div>
       <div class="ev-list-head">
@@ -710,7 +711,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.4.6</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.4.7</span>
     </div>
 
     <!-- Курси валют -->
@@ -903,7 +904,7 @@ tr:hover .del-row-btn{opacity:1;}
 </div>
 
 <!-- MODAL: ADD EVENT -->
-<div class="modal-bg hidden" id="modalEvent">
+<div class="modal-bg hidden" id="modalEvent" style="z-index:350">
   <div class="modal" style="max-width:400px">
     <div class="modal-title"><span id="evModalTitle">Нова подія</span> <div class="close-x" onclick="closeModal('modalEvent')">✕</div></div>
     <input type="hidden" id="mEvAssetId" value=""/>
@@ -922,7 +923,7 @@ tr:hover .del-row-btn{opacity:1;}
     </div>
     <div class="frow">
       <div class="field"><label>Дата</label><input type="date" id="mEvDate"/></div>
-      <div class="field"><label>Рахунок</label><select id="mEvAcc"><option value="">— будь-який —</option></select></div>
+      <div class="field"><label>Рахунок</label><select id="mEvAcc"></select></div>
     </div>
     <div class="field"><label>ПОВТОРЕННЯ</label>
       <select id="mEvRepeat">
@@ -1858,7 +1859,7 @@ function syncAccSelects(){
   const opts=ST.accounts.map(a=>`<option value="${a.id}">${stripIconPrefix(a.name)}</option>`).join('');
   ['mAsFromAcc','mEvAcc','qTrTo'].forEach(id=>{
     const el=document.getElementById(id);
-    const prefix=id==='mAsFromAcc'?'<option value="">— не списувати —</option>':id==='mEvAcc'?'<option value="">— будь-який —</option>':'';
+    const prefix=id==='mAsFromAcc'?'<option value="">— не списувати —</option>':'';
     el.innerHTML=prefix+opts;
   });
   syncCategorySelects();
@@ -2355,27 +2356,42 @@ function setEvType(t){
   document.getElementById('togEvIn').className='tog'+(t==='income'?' on-in':'');
   document.getElementById('togEvOut').className='tog'+(t==='expense'?' on-out':'');
 }
-function saveEvent(){
+async function saveEvent(){
   const name=document.getElementById('mEvName').value.trim();
   const amt=parseFloat(document.getElementById('mEvAmt').value)||0;
   const date=document.getElementById('mEvDate').value;
   const currency=document.getElementById('mEvCurrency').value;
+  const accId=document.getElementById('mEvAcc').value;
+  const repeat=document.getElementById('mEvRepeat').value;
   if(!name||!date){toast('Заповніть назву та дату',false);return;}
-  if(editEventId){
+  if(!accId){toast('Виберіть рахунок',false);return;}
+  const acc=ST.accounts.find(a=>a.id===accId);
+  if(!acc){toast('Рахунок не знайдено',false);return;}
+
+  // Якщо редагуємо шаблон повторюваної події
+  if(editEventId && ST.events.find(x=>x.id===editEventId)){
     const e=ST.events.find(x=>x.id===editEventId);
-    if(e){
-      Object.assign(e,{type:selEvType,name,amount:amt,currency,date,
-        repeat:document.getElementById('mEvRepeat').value,
-        accId:document.getElementById('mEvAcc').value});
-    }
+    if(e)Object.assign(e,{type:selEvType,name,amount:amt,currency,date,repeat,accId});
     editEventId=null;
     saveST(); refreshAll(); renderCalendar(); closeModal('modalEvent'); toast('Подію оновлено!');
     return;
   }
-  ST.events.push({id:uid(),type:selEvType,name,amount:amt,currency,date,
-    repeat:document.getElementById('mEvRepeat').value,
-    accId:document.getElementById('mEvAcc').value,
-    assetId:document.getElementById('mEvAssetId')?document.getElementById('mEvAssetId').value:''});
+
+  // Нова подія: одразу проводимо як реальну транзакцію на введену дату
+  const rates=await fetchNBURates(date);
+  const amtAcc=convertCurrency(amt,currency,acc.currency,rates);
+  const signedAmt=selEvType==='income'?amtAcc:-amtAcc;
+  acc.balance+=signedAmt;
+  const txnId=uid();
+  const tplId=repeat!=='once'?uid():null;
+  ST.transactions.push({id:txnId,accId,amount:signedAmt,desc:name,cat:name,icon:'',date,type:selEvType,eventTplId:tplId||undefined});
+
+  // Якщо подія повторювана — зберігаємо шаблон, щоб майбутні настання теж проводились автоматично
+  if(repeat!=='once'){
+    ST.events.push({id:tplId,type:selEvType,name,amount:amt,currency,date,repeat,accId,
+      assetId:document.getElementById('mEvAssetId')?document.getElementById('mEvAssetId').value:''});
+  }
+
   saveST(); refreshAll(); renderCalendar(); closeModal('modalEvent'); toast('Подію додано!');
 }
 
@@ -2384,33 +2400,33 @@ let editEventId=null;
 let dayEvDate='';
 
 function getAllForDate(ds){
-  const d=new Date(ds);
   const items=[];
-  ST.events.forEach(e=>{
-    const ed=new Date(e.date);
-    let match=false;
-    if(e.repeat==='once')match=e.date===ds;
-    else if(ds>=e.date){
-      if(e.repeat==='monthly')match=d.getDate()===ed.getDate();
-      if(e.repeat==='weekly'){const diff=Math.round((d-ed)/86400000);match=diff%7===0;}
-      if(e.repeat==='quarterly'){const diff=Math.round((d-ed)/86400000);match=diff%91===0;}
-      if(e.repeat==='yearly')match=d.getDate()===ed.getDate()&&d.getMonth()===ed.getMonth();
-    }
-    if(match){
-      const acc=e.accId?ST.accounts.find(a=>a.id===e.accId):null;
-      items.push({...e,source:'event',name:e.name,amount:e.amount,type:e.type,date:ds,repeat:e.repeat,
-        accName:acc?stripIconPrefix(acc.name):'',accCur:acc?acc.currency:''});
-    }
-  });
+  // Реальні проведені операції (включно з усіма настаннями повторюваних подій —
+  // вони проводяться функцією processRecurringEvents/saveEvent одразу при створенні/настанні дати)
   ST.transactions.filter(t=>t.date===ds).forEach(t=>{
     const acc=ST.accounts.find(a=>a.id===t.accId);
+    const tpl=t.eventTplId?ST.events.find(e=>e.id===t.eventTplId):null;
     items.push({
       id:t.id,source:'txn',name:t.desc||t.cat,
       amount:Math.abs(t.amount),type:t.type==='transfer'?(t.amount>0?'income':'expense'):t.type,
-      date:ds,repeat:'once',cat:t.cat,icon:t.icon,accId:t.accId,
+      date:ds,repeat:tpl?tpl.repeat:'once',cat:t.cat,icon:t.icon,accId:t.accId,
       accName:acc?stripIconPrefix(acc.name):'',accCur:acc?acc.currency:'UAH',
       rawAmount:t.amount
     });
+  });
+  return items;
+}
+
+// Для відображення (крапки в сітці календаря, заголовки дня): реальні операції +
+// майбутні запланові настання шаблонів, які ще не проведені (щоб майбутнє теж було видно)
+function getDisplayItemsForDate(ds){
+  const items=getAllForDate(ds);
+  getEventsForDate(ds).forEach(e=>{
+    const already=ST.transactions.some(t=>t.eventTplId===e.id&&t.date===ds);
+    if(already)return;
+    const acc=e.accId?ST.accounts.find(a=>a.id===e.accId):null;
+    items.push({...e,source:'event',name:e.name,amount:e.amount,type:e.type,date:ds,repeat:e.repeat,
+      accName:acc?stripIconPrefix(acc.name):'',accCur:acc?acc.currency:''});
   });
   return items;
 }
@@ -2429,7 +2445,48 @@ function getEventsForDate(ds){
   });
 }
 
+// Проводить реальні транзакції для всіх настань повторюваних подій (шаблонів у ST.events)
+// з моменту їх створення до сьогодні включно, якщо вони ще не були проведені.
+// Один шаблон -> одна транзакція на кожну дату настання (без дублів, відстежується через eventTplId+date).
+function processRecurringEvents(){
+  const td=today();
+  let changed=false;
+  ST.events.forEach(e=>{
+    if(e.repeat==='once')return;
+    const acc=ST.accounts.find(a=>a.id===e.accId);
+    if(!acc)return;
+    let d=new Date(e.date);
+    const start=new Date(e.date);
+    const end=new Date(td);
+    let guard=0;
+    while(d<=end&&guard<2000){
+      guard++;
+      const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      let matches=false;
+      if(e.repeat==='monthly')matches=d.getDate()===start.getDate();
+      else if(e.repeat==='weekly'){const diff=Math.round((d-start)/86400000);matches=diff%7===0;}
+      else if(e.repeat==='quarterly'){const diff=Math.round((d-start)/86400000);matches=diff%91===0;}
+      else if(e.repeat==='yearly')matches=d.getDate()===start.getDate()&&d.getMonth()===start.getMonth();
+      if(matches&&ds!==e.date){ // ds===e.date вже проведено одразу при створенні події
+        const already=ST.transactions.some(t=>t.eventTplId===e.id&&t.date===ds);
+        if(!already){
+          // Примітка: курс на дату майбутнього/минулого настання тут не запитується (синхронний прохід),
+          // тож сума береться як є в одиницях події; за потреби конвертації варіюйте валюту події = валюті рахунку.
+          const amt=e.amount;
+          acc.balance+=e.type==='income'?Math.abs(amt):-Math.abs(amt);
+          ST.transactions.push({id:uid(),accId:e.accId,amount:e.type==='income'?Math.abs(amt):-Math.abs(amt),
+            desc:e.name,cat:e.name,icon:'',date:ds,type:e.type,eventTplId:e.id});
+          changed=true;
+        }
+      }
+      d.setDate(d.getDate()+1);
+    }
+  });
+  if(changed)saveST();
+}
+
 function renderCalendar(){
+  processRecurringEvents();
   const now=new Date();
   if(calY===undefined){calY=now.getFullYear();calM=now.getMonth();}
   document.getElementById('calMonth').textContent=MONTHS_UK[calM]+' '+calY;
@@ -2442,7 +2499,7 @@ function renderCalendar(){
   for(let i=dow-1;i>0;i--)html+=`<div class="cal-day other">${prevDim-i+1}</div>`;
   for(let d=1;d<=dim;d++){
     const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const all=getAllForDate(ds);
+    const all=getDisplayItemsForDate(ds);
     const isToday=ds===todayStr;
     const hasIn=all.some(e=>e.type==='income');
     const hasOut=all.some(e=>e.type==='expense');
@@ -2470,7 +2527,11 @@ function renderUpcoming(){
   for(let i=0;i<45;i++){
     const d=new Date(now);d.setDate(d.getDate()+i);
     const ds=d.toISOString().slice(0,10);
-    getEventsForDate(ds).forEach(e=>{if(!upcoming.find(u=>u.id===e.id&&u.ds===ds))upcoming.push({...e,ds});});
+    getEventsForDate(ds).forEach(e=>{
+      const already=ST.transactions.some(t=>t.eventTplId===e.id&&t.date===ds);
+      if(already)return;
+      if(!upcoming.find(u=>u.id===e.id&&u.ds===ds))upcoming.push({...e,ds});
+    });
   }
   upcoming.sort((a,b)=>a.ds.localeCompare(b.ds));
   if(!upcoming.length){list.innerHTML='<div style="color:var(--txt3);font-size:12px;text-align:center;padding:16px">Подій немає</div>';return;}
@@ -2487,21 +2548,17 @@ function renderUpcoming(){
 
 function renderEvTable(){
   const wrap=document.getElementById('evTable');
-  const all=ST.events.map(e=>{
-    const acc=e.accId?ST.accounts.find(a=>a.id===e.accId):null;
-    return {...e,source:'event',accName:acc?stripIconPrefix(acc.name):'',accCur:acc?acc.currency:'UAH'};
-  });
-  ST.transactions.forEach(t=>{
-    const acc=t.accId?ST.accounts.find(a=>a.id===t.accId):null;
-    all.push({
-      id:t.id,source:'txn',name:t.desc||t.cat,
-      amount:Math.abs(t.amount),type:t.type==='transfer'?(t.amount>0?'income':'expense'):t.type,
-      date:t.date,repeat:'once',cat:t.cat,icon:t.icon,accName:acc?stripIconPrefix(acc.name):'',accCur:acc?acc.currency:'UAH'
-    });
-  });
+  const lbl=document.getElementById('evTableMonthLabel');
+  if(lbl)lbl.textContent='Операції · '+MONTHS_UK[calM]+' '+calY;
+  const dim=new Date(calY,calM+1,0).getDate();
+  let all=[];
+  for(let d=1;d<=dim;d++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    all=all.concat(getAllForDate(ds));
+  }
   all.sort((a,b)=>b.date.localeCompare(a.date));
-  if(!all.length){wrap.innerHTML=`<div style="text-align:center;padding:22px;color:var(--txt3);font-size:13px">Операцій ще немає</div>`;return;}
-  wrap.innerHTML=all.slice(0,40).map(e=>`
+  if(!all.length){wrap.innerHTML=`<div style="text-align:center;padding:22px;color:var(--txt3);font-size:13px">Операцій за цей місяць немає</div>`;return;}
+  wrap.innerHTML=all.slice(0,80).map(e=>`
     <div class="ev-row-wrap">
       <div class="ev-row-actions">
         <button class="act-edit" data-id="${e.id}" data-src="${e.source}" title="Редагувати"><i class="ti ti-pencil"></i></button>
@@ -2685,7 +2742,7 @@ document.getElementById('accList')&&document.getElementById('accList').addEventL
 async function showDayEvents(ds){
   dayEvDate=ds;
   document.getElementById('dayEvTitle').textContent='Події за '+ds;
-  const all=getAllForDate(ds);
+  const all=getDisplayItemsForDate(ds);
   const list=document.getElementById('dayEvList');
   if(!all.length){
     list.innerHTML='<div style="color:var(--txt3);font-size:13px;text-align:center;padding:16px">Немає подій</div>';
@@ -3267,7 +3324,7 @@ function refreshAll(){renderAccounts();renderAssets();}
       updateUserIndicator();
       const now=new Date();
       calY=now.getFullYear();calM=now.getMonth();
-      document.getElementById('datechip').textContent=now.toLocaleDateString('uk-UA',{weekday:'short',day:'numeric',month:'short'});
+      processRecurringEvents();
       refreshAll();
       syncCategorySelects();
       loadSettingsRates();
