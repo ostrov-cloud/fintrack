@@ -379,7 +379,7 @@ tr:hover .del-row-btn{opacity:1;}
   .shell{flex-direction:column;height:auto;overflow:visible;}
   .sidebar{display:none;}
   .bottom-nav{display:block;}
-  .main{overflow:visible;padding-bottom:70px;}
+  .main{overflow:visible;padding-bottom:104px;}
   .content{overflow-y:visible;padding:14px;}
   .logo{margin-bottom:0;margin-right:6px;}
   .nav-tip{display:none;}
@@ -388,9 +388,23 @@ tr:hover .del-row-btn{opacity:1;}
   .hero-amount{font-size:26px;}
   .tbl-wrap{display:none;}
   .asset-cards{display:flex;}
-  .fab{bottom:80px;}
-  .fab-menu{bottom:138px;}
   .sync-chip-label-text{display:none;}
+
+  /* Збільшена нижня навігація — легше потрапити пальцем */
+  .bottom-nav{padding:8px 4px env(safe-area-inset-bottom,10px) 4px;}
+  .bnav-btn{min-width:64px;min-height:64px;padding:6px 8px;gap:3px;border-radius:12px;}
+  .bnav-btn i{font-size:44px;}
+  .bnav-btn span{font-size:11px;}
+  .fab{bottom:112px;}
+  .fab-menu{bottom:172px;}
+
+  /* Топбар на вузьких екранах (iPhone 12 та подібні): дату видно, чіп синхронізації більший */
+  .topbar{padding:10px 14px;}
+  .topbar-title{font-size:15px;}
+  .topbar-right{gap:7px;}
+  .date-chip{font-size:14px;font-weight:500;padding:6px 12px;white-space:nowrap;}
+  .sync-chip{padding:10px;border-radius:50%;}
+  .sync-chip-ico{font-size:24px;}
 }
 /* ── LOADING SCREEN ── */
 .load-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1a1040 0%,#2d1b69 25%,#4b2d8a 50%,#6b3fa0 75%,#1a1040 100%);background-size:400% 400%;animation:bgShift 12s ease infinite;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s,visibility .5s;}
@@ -696,7 +710,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.4.3</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.4.5</span>
     </div>
 
     <!-- Курси валют -->
@@ -2382,7 +2396,11 @@ function getAllForDate(ds){
       if(e.repeat==='quarterly'){const diff=Math.round((d-ed)/86400000);match=diff%91===0;}
       if(e.repeat==='yearly')match=d.getDate()===ed.getDate()&&d.getMonth()===ed.getMonth();
     }
-    if(match)items.push({...e,source:'event',name:e.name,amount:e.amount,type:e.type,date:ds,repeat:e.repeat});
+    if(match){
+      const acc=e.accId?ST.accounts.find(a=>a.id===e.accId):null;
+      items.push({...e,source:'event',name:e.name,amount:e.amount,type:e.type,date:ds,repeat:e.repeat,
+        accName:acc?stripIconPrefix(acc.name):'',accCur:acc?acc.currency:''});
+    }
   });
   ST.transactions.filter(t=>t.date===ds).forEach(t=>{
     const acc=ST.accounts.find(a=>a.id===t.accId);
@@ -2469,7 +2487,10 @@ function renderUpcoming(){
 
 function renderEvTable(){
   const wrap=document.getElementById('evTable');
-  const all=ST.events.map(e=>({...e,source:'event'}));
+  const all=ST.events.map(e=>{
+    const acc=e.accId?ST.accounts.find(a=>a.id===e.accId):null;
+    return {...e,source:'event',accName:acc?stripIconPrefix(acc.name):'',accCur:acc?acc.currency:'UAH'};
+  });
   ST.transactions.forEach(t=>{
     const acc=t.accId?ST.accounts.find(a=>a.id===t.accId):null;
     all.push({
@@ -2718,7 +2739,6 @@ async function refreshCalendarRates(){
   const rates=await fetchNBURates(today());
   document.getElementById('calRateUSD').textContent=rates.USD?rates.USD.toFixed(2):'—';
   document.getElementById('calRateEUR').textContent=rates.EUR?rates.EUR.toFixed(2):'—';
-  toast('Курси оновлено!');
 }
 
 /* FORECAST */

@@ -138,11 +138,18 @@ const Users = {
   // Людяні повідомлення про помилки Firebase Auth
   _translateAuthError(msg){
     if(!msg) return 'Невідома помилка';
+    // Сучасний Firebase (з увімкненим Email Enumeration Protection) повертає
+    // єдиний код invalid-credential і для невірного email, і для невірного пароля —
+    // окремі user-not-found/wrong-password більше не приходять у цьому випадку.
+    if(msg.includes('invalid-credential')) return 'Невірний email або пароль';
     if(msg.includes('user-not-found')) return 'Користувача не знайдено';
     if(msg.includes('wrong-password')) return 'Невірний пароль';
     if(msg.includes('email-already-in-use')) return 'Email вже зареєстрований';
     if(msg.includes('invalid-email')) return 'Невірний формат email';
     if(msg.includes('weak-password')) return 'Пароль занадто простий';
+    if(msg.includes('user-disabled')) return 'Цей акаунт вимкнено';
+    if(msg.includes('too-many-requests')) return 'Забагато спроб. Спробуйте пізніше';
+    if(msg.includes('network-request-failed')) return 'Немає з\'єднання з мережею';
     if(msg.includes('popup-closed-by-user')) return 'Вікно входу закрито';
     return msg;
   }
