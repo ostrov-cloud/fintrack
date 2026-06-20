@@ -357,7 +357,7 @@ tr:hover .del-row-btn{opacity:1;}
 @keyframes spin{to{transform:rotate(360deg);}}
 </style>
 <link rel="stylesheet" href="libs/tabler-icons.min.css"/>
-<link rel="manifest" href="/manifest.json"/>
+<link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#5b4cc4"/>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -2824,7 +2824,7 @@ async function authChangePassword(){
   document.getElementById('changePwdBlock').style.display='none';
   toast('Пароль змінено!');
 }
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 </script>
 </body>
 </html>
