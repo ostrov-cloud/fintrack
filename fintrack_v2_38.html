@@ -70,6 +70,11 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .badge-out{background:rgba(196,74,29,.1);color:#B8401A;}
 .badge-rep{background:rgba(109,90,230,.1);color:#5A45D4;}
 
+.cur-ico{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.cur-usd{background:rgba(16,168,112,.12);color:#0F8A5C;}
+.cur-eur{background:rgba(109,90,230,.12);color:#5A45D4;}
+.cur-chip{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--txt2);}
+
 .stat-grid{display:grid;gap:10px;}
 .stat-grid-3{grid-template-columns:repeat(3,1fr);}
 .stat-grid-4{grid-template-columns:repeat(4,1fr);}
@@ -124,7 +129,7 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .ev-col-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ev-col-rep{text-align:center;}
 .ev-col-amt{text-align:right;font-size:13px;font-weight:500;}
-.ev-col-acc{font-size:11px;color:var(--pu4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:8px;}
+.ev-col-acc{font-size:11px;color:var(--pu4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:18px;}
 
 /* ── SWIPE-TO-ACT: day events modal (same mechanic as operations list) ── */
 .dayev-row-wrap{position:relative;overflow:hidden;border-radius:var(--r-sm);}
@@ -576,18 +581,17 @@ tr:hover .del-row-btn{opacity:1;}
         <button class="ev-add-btn" onclick="openAddEvent()">+ Нова подія</button>
       </div>
       <div class="ev-list-head">
-        <span>Назва</span><span style="text-align:center">Повтор</span><span style="text-align:right">Сума</span><span style="text-align:center;padding-left:8px">Рахунок</span>
+        <span>Назва</span><span style="text-align:center">Повтор</span><span style="text-align:right">Сума</span><span style="text-align:left;padding-left:18px">Рахунок</span>
       </div>
       <div id="evTable" class="ev-list"></div>
     </div>
     <div class="panel" style="margin-top:14px">
       <div class="panel-hdr">
         <span class="panel-title">Курси валют НБУ</span>
-        <button class="panel-action" onclick="refreshCalendarRates()">🔄 Оновити</button>
       </div>
-      <div id="calRatesBody" style="display:flex;gap:16px;font-size:14px;padding:4px 0">
-        <span>💵 USD: <b id="calRateUSD">—</b> ₴</span>
-        <span>💶 EUR: <b id="calRateEUR">—</b> ₴</span>
+      <div id="calRatesBody" style="display:flex;gap:22px;padding:4px 0">
+        <span class="cur-chip"><span class="cur-ico cur-usd"><i class="ti ti-currency-dollar"></i></span>USD: <b id="calRateUSD">—</b> ₴</span>
+        <span class="cur-chip"><span class="cur-ico cur-eur"><i class="ti ti-currency-euro"></i></span>EUR: <b id="calRateEUR">—</b> ₴</span>
       </div>
     </div>
   </div>
@@ -674,7 +678,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.4.1</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.4.2</span>
     </div>
 
     <!-- Курси валют -->
@@ -995,11 +999,8 @@ tr:hover .del-row-btn{opacity:1;}
   <div class="modal" style="max-width:420px">
     <div class="modal-title"><span id="dayEvTitle">Події</span> <div class="close-x" onclick="closeModal('modalDayEvents')">✕</div></div>
     <div id="dayEvRates" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="color:var(--txt3)">Курси валют</span>
-        <button class="panel-action" onclick="refreshDayRates()" style="font-size:11px">🔄 Оновити</button>
-      </div>
-      <div id="dayEvRatesBody" style="margin-top:5px;display:flex;gap:12px"></div>
+      <span style="color:var(--txt3)">Курси валют</span>
+      <div id="dayEvRatesBody" style="margin-top:6px;display:flex;gap:16px"></div>
     </div>
     <div id="dayEvList" class="txn-list" style="max-height:350px;overflow-y:auto;margin-bottom:10px"></div>
     <button class="btn btn-primary" style="width:100%;margin-bottom:6px" id="dayEvAddBtn" onclick="addEventForDay()">+ Нова подія</button>
@@ -1051,7 +1052,7 @@ tr:hover .del-row-btn{opacity:1;}
 </div>
 
 <!-- MODAL: CONFIRM -->
-<div class="modal-bg hidden" id="modalConfirm">
+<div class="modal-bg hidden" id="modalConfirm" style="z-index:400">
   <div class="modal" style="max-width:360px">
     <div class="confirm-text" id="confirmText"></div>
     <div class="btn-row">
@@ -1067,12 +1068,16 @@ tr:hover .del-row-btn{opacity:1;}
     <div class="modal-title"><span>📝 Редактор курсів</span> <div class="close-x" onclick="closeModal('modalRateEditor')">✕</div></div>
     <div style="max-height:55vh;overflow-y:auto;margin-bottom:14px">
       <table style="width:100%;table-layout:auto">
-        <thead><tr><th style="width:40%">Дата</th><th style="width:30%">💵 USD</th><th style="width:30%">💶 EUR</th></tr></thead>
+        <thead><tr>
+          <th style="width:8%"><input type="checkbox" class="chk" id="rateEditorSelAll" onchange="toggleAllRateSel(this)"/></th>
+          <th style="width:32%">Дата</th><th style="width:28%">💵 USD</th><th style="width:28%">💶 EUR</th>
+        </tr></thead>
         <tbody id="rateEditorBody"></tbody>
       </table>
     </div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="closeModal('modalRateEditor')">Скасувати</button>
+      <button class="btn" style="background:var(--card2);border:0.5px solid var(--red);color:var(--red);display:flex;align-items:center;gap:6px;justify-content:center" onclick="deleteSelectedRates()"><i class="ti ti-trash"></i> Видалити</button>
       <button class="btn btn-primary" onclick="saveRateEditor()">💾 Зберегти</button>
     </div>
   </div>
@@ -2483,8 +2488,8 @@ async function showDayEvents(ds){
   const rates=await fetchNBURates(ds);
   const ratesBody=document.getElementById('dayEvRatesBody');
   ratesBody.innerHTML=`
-    <span style="font-size:12px">💵 USD: <b>${rates.USD?rates.USD.toFixed(2):'—'}</b> ₴</span>
-    <span style="font-size:12px">💶 EUR: <b>${rates.EUR?rates.EUR.toFixed(2):'—'}</b> ₴</span>`;
+    <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-usd" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-dollar"></i></span>USD: <b>${rates.USD?rates.USD.toFixed(2):'—'}</b> ₴</span>
+    <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-eur" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-euro"></i></span>EUR: <b>${rates.EUR?rates.EUR.toFixed(2):'—'}</b> ₴</span>`;
   document.getElementById('dayEvRates').style.display='block';
   document.getElementById('dayEvAddBtn').onclick=()=>addEventForDay(ds);
   openModal('modalDayEvents');
@@ -2497,8 +2502,8 @@ async function refreshDayRates(){
   const rates=await fetchNBURates(dayEvDate);
   const ratesBody=document.getElementById('dayEvRatesBody');
   ratesBody.innerHTML=`
-    <span style="font-size:12px">💵 USD: <b>${rates.USD?rates.USD.toFixed(2):'—'}</b> ₴</span>
-    <span style="font-size:12px">💶 EUR: <b>${rates.EUR?rates.EUR.toFixed(2):'—'}</b> ₴</span>`;
+    <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-usd" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-dollar"></i></span>USD: <b>${rates.USD?rates.USD.toFixed(2):'—'}</b> ₴</span>
+    <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-eur" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-euro"></i></span>EUR: <b>${rates.EUR?rates.EUR.toFixed(2):'—'}</b> ₴</span>`;
   toast('Курси оновлено!');
 }
 
@@ -2740,18 +2745,37 @@ function openRateEditor(){
 function renderRateEditor(){
   const dates=Object.keys(ST.exchangeRates).sort().reverse();
   const tbody=document.getElementById('rateEditorBody');
+  const selAll=document.getElementById('rateEditorSelAll');
+  if(selAll)selAll.checked=false;
   if(!dates.length){
-    tbody.innerHTML='<tr><td colspan="3" style="text-align:center;padding:28px;color:var(--txt3);font-size:13px">Немає збережених курсів</td></tr>';
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--txt3);font-size:13px">Немає збережених курсів</td></tr>';
     return;
   }
   tbody.innerHTML=dates.map(ds=>{
     const r=ST.exchangeRates[ds];
     return `<tr>
+      <td><input type="checkbox" class="chk rate-sel" data-date="${ds}"/></td>
       <td style="font-weight:500">${ds}</td>
       <td><input type="number" step="0.01" value="${r.USD||0}" data-date="${ds}" data-curr="USD" style="width:100%;background:var(--card2);border:0.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;color:var(--txt);outline:none" onfocus="this.select()"/></td>
       <td><input type="number" step="0.01" value="${r.EUR||0}" data-date="${ds}" data-curr="EUR" style="width:100%;background:var(--card2);border:0.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;color:var(--txt);outline:none" onfocus="this.select()"/></td>
     </tr>`;
   }).join('');
+}
+
+function toggleAllRateSel(cb){
+  document.querySelectorAll('.rate-sel').forEach(c=>c.checked=cb.checked);
+}
+
+function deleteSelectedRates(){
+  const sel=[...document.querySelectorAll('.rate-sel:checked')].map(c=>c.dataset.date);
+  if(!sel.length){toast('Виберіть дати для видалення',false);return;}
+  showConfirm(`Видалити курси за ${sel.length} дат(и)?`,()=>{
+    sel.forEach(ds=>delete ST.exchangeRates[ds]);
+    saveST();
+    renderRateEditor();
+    loadSettingsRates();
+    toast(`Видалено курсів: ${sel.length}`);
+  });
 }
 
 function saveRateEditor(){
