@@ -17,9 +17,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg:#f3eefb;--bg2:#e8dff7;--bg3:#dacef2;
-  --card:#ffffff;--card2:#f5f0fd;Рахунки / модальне вікно Операція тут поле дата виділяється (У мобільній версії), треба поправити, і текст також.
-Також теба тут дотати поле отис зробити ще більшим, щоб рядків 10 було зразу видно
-Ще на цій сторінці потрібно дати змоху змінювати  Останні операції, таксамо слайдингом нехай з'являються кнопки Редагувати та видалити. Модальне вікно таке саме як і при створенні нової операції на цій сторінці
+  --card:#ffffff;--card2:#f5f0fd;
   --border:#ddd3f0;--border2:#c4b0e6;
   --txt:#1e1840;--txt2:#5a4b8c;--txt3:#9080b8;
   --pu4:#8B7CF6;--pu6:#6D5AE6;--pu8:#4C3AC4;
@@ -93,6 +91,7 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .cur-chip{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--txt2);}
 
 .stat-grid{display:grid;gap:10px;}
+.stat-grid-2{grid-template-columns:repeat(2,1fr);}
 .stat-grid-3{grid-template-columns:repeat(3,1fr);}
 .stat-grid-4{grid-template-columns:repeat(4,1fr);}
 .stat-card{background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r);padding:12px 14px;}
@@ -120,6 +119,13 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions .acc-act-add{background:var(--gr2);}
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
 .acc-row-actions .acc-act-del{background:var(--red);}
+.ai-row-wrap{position:relative;overflow:hidden;border-radius:var(--r-sm);}
+.ai-row-actions{position:absolute;top:0;right:0;bottom:0;display:flex;}
+.ai-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
+.ai-row-actions .ai-act-add{background:var(--gr2);}
+.ai-row-actions .ai-act-edit{background:var(--pu6);}
+.ai-row-actions .ai-act-del{background:var(--red);}
+.ai-row-content{position:relative;z-index:1;background:var(--card);touch-action:pan-y;user-select:none;transition:transform .2s ease;border-radius:var(--r-sm);}
 .acc-row{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:transform .2s ease,border-color .15s;position:relative;z-index:1;touch-action:pan-y;user-select:none;}
 .acc-row:hover,.acc-row.active{border-color:var(--pu4);background:var(--card2);}
 .acc-row.active{border-color:var(--pu6);box-shadow:0 0 0 1px var(--pu6);}
@@ -558,11 +564,9 @@ tr:hover .del-row-btn{opacity:1;}
       </div>
       <div style="font-size:11px;color:var(--txt3)" id="assetMonthNote"></div>
     </div>
-    <div class="stat-grid stat-grid-4" style="margin-bottom:16px">
+    <div class="stat-grid stat-grid-2" style="margin-bottom:16px">
       <div class="stat-card"><div class="stat-lbl">Загальна вартість</div><div class="stat-val c-gr" id="asTotalVal">₴0</div></div>
-      <div class="stat-card"><div class="stat-lbl">Дохід / місяць</div><div class="stat-val c-gr" id="asMonthInc">+₴0</div></div>
-      <div class="stat-card"><div class="stat-lbl">Витрати / місяць</div><div class="stat-val c-or" id="asMonthExp">-₴0</div></div>
-      <div class="stat-card"><div class="stat-lbl">Чистий потік</div><div class="stat-val" id="asNet">₴0</div></div>
+      <div class="stat-card"><div class="stat-lbl">Потік</div><div class="stat-val" id="asNet">₴0</div></div>
     </div>
 
     <div class="tbl-wrap">
@@ -570,9 +574,9 @@ tr:hover .del-row-btn{opacity:1;}
         <thead>
           <tr>
             <th style="width:40%">Назва</th>
-            <th style="width:20%" class="r">Вартість</th>
             <th style="width:20%" class="r">Дохід / міс</th>
             <th style="width:20%" class="r">Витрати / міс</th>
+            <th style="width:20%" class="r">Вартість</th>
           </tr>
         </thead>
         <tbody id="assetBody">
@@ -723,7 +727,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.3</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.4</span>
     </div>
 
     <!-- Курси валют -->
@@ -953,7 +957,7 @@ tr:hover .del-row-btn{opacity:1;}
       <div class="field"><label>Опис</label>
         <div style="position:relative">
           <textarea id="qExpDesc" placeholder="на що (можна списком, кожен товар з нового рядка)" rows="8" style="resize:vertical;min-height:160px;padding-right:40px"></textarea>
-          <button type="button" onclick="insertCheckmark('qExpDesc')" title="Вставити галочку" aria-label="Вставити галочку" style="position:absolute;right:6px;bottom:6px;width:28px;height:28px;border-radius:50%;background:var(--gr);border:none;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.85;box-shadow:0 2px 6px rgba(0,0,0,.15)">✓</button>
+          <button type="button" onclick="insertCheckmark('qExpDesc')" title="Вставити галочку" aria-label="Вставити галочку" style="position:absolute;left:50%;bottom:34px;transform:translateX(-50%);width:30px;height:30px;border-radius:50%;background:var(--pu6);border:none;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.45;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:opacity .15s,transform .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.45'">✓</button>
         </div>
       </div>
       <div id="qExpInfo" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:10px;margin-bottom:10px;font-size:12px;display:none">
@@ -2152,6 +2156,17 @@ function saveAsset(){
   saveST(); refreshAll(); closeModal('modalAsset');
 }
 
+function getAssetTotalValue(item){
+  let val=item.value||0;
+  if(item.linkedAccId){
+    const lnk=ST.accounts.find(a=>a.id===item.linkedAccId);
+    if(lnk){
+      const contrib=ST.transactions.filter(t=>t.accId===lnk.id&&t.amount<0&&t.cat!=='💰 Старт'&&t.cat!=='⚙️ Система').reduce((s,t)=>s+Math.abs(t.amount),0);
+      val+=contrib;
+    }
+  }
+  return val;
+}
 function renderAssets(){
   const body=document.getElementById('assetBody');
   const assets=ST.assets.filter(a=>a.type==='asset');
@@ -2196,9 +2211,9 @@ function renderAssets(){
             </div>
           </div>
         </div></td>
-        <td class="r ${item.value?isA?'val-pos':'val-neg':'val-neu'}">${item.value?fmt(item.value,item.currency):'—'}</td>
         <td class="r ${inc?'val-pos':'val-neu'}">${inc?'+'+fmt(inc,item.currency):'—'}</td>
         <td class="r ${exp?'val-neg':'val-neu'}">${exp?'−'+fmt(exp,item.currency):'—'}</td>
+        <td class="r ${item.value?isA?'val-pos':'val-neg':'val-neu'}">${item.value?fmt(getAssetTotalValue(item),item.currency):'—'}</td>
         <td style="white-space:nowrap">
           ${lnk?`<button class="del-row-btn" onclick="showAssetInfo('${item.id}')" title="Інфо" style="opacity:1"><i class="ti ti-info-circle"></i></button>`:''}
           <button class="del-row-btn" onclick="editAsset('${item.id}')" title="Редагувати" style="opacity:1"><i class="ti ti-pencil"></i></button>
@@ -2231,16 +2246,16 @@ function renderAssets(){
         </div>
         <div class="asset-card-body">
           <div class="asset-card-stat">
-            <div class="asset-card-stat-lbl">Вартість</div>
-            <div class="asset-card-stat-val ${item.value?isA?'c-gr':'c-or':'val-neu'}">${item.value?fmt(item.value,item.currency):'—'}</div>
-          </div>
-          <div class="asset-card-stat">
             <div class="asset-card-stat-lbl">Дохід/міс</div>
             <div class="asset-card-stat-val ${inc?'c-gr':'val-neu'}">${inc?'+'+fmt(inc,item.currency):'—'}</div>
           </div>
           <div class="asset-card-stat">
             <div class="asset-card-stat-lbl">Витрати/міс</div>
             <div class="asset-card-stat-val ${exp?'c-or':'val-neu'}">${exp?'−'+fmt(exp,item.currency):'—'}</div>
+          </div>
+          <div class="asset-card-stat">
+            <div class="asset-card-stat-lbl">Вартість</div>
+            <div class="asset-card-stat-val ${item.value?isA?'c-gr':'c-or':'val-neu'}">${item.value?fmt(getAssetTotalValue(item),item.currency):'—'}</div>
           </div>
         </div>
         <div class="asset-card-actions">
@@ -2271,7 +2286,7 @@ async function updateAssetSummary(){
   ST.assets.forEach(a=>{
     const rate=a.currency==='UAH'?1:(rates[a.currency]||1);
     // Вартість — всі записи (і активи, і пасиви)
-    totalVal+=a.value*rate;
+    totalVal+=getAssetTotalValue(a)*rate;
 
     // Доходи і витрати — з транзакцій пов'язаного рахунку, для ОБОХ типів
     const lnk=a.linkedAccId?ST.accounts.find(acc=>acc.id===a.linkedAccId):null;
@@ -2283,8 +2298,6 @@ async function updateAssetSummary(){
 
   const net=totalInc-totalExp;
   document.getElementById('asTotalVal').textContent=fmt(totalVal,'UAH');
-  document.getElementById('asMonthInc').textContent='+'+fmt(totalInc,'UAH');
-  document.getElementById('asMonthExp').textContent='-'+fmt(totalExp,'UAH');
   document.getElementById('asNet').textContent=fmtSign(net,'UAH');
   document.getElementById('asNet').className='stat-val '+(net>=0?'c-gr':'c-or');
 }
@@ -2328,6 +2341,8 @@ function assetInfoMonthMove(dir,assetId,accId){
 function renderAssetInfoContent(asset,acc){
   const mkSel=`${assetInfoMonth.year}-${String(assetInfoMonth.month+1).padStart(2,'0')}`;
   const txns=ST.transactions.filter(t=>t.accId===acc.id&&monthKey(t.date)===mkSel);
+  const totalInc=txns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const totalExp=txns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
 
   let html=`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -2338,32 +2353,71 @@ function renderAssetInfoContent(asset,acc){
       </div>
     </div>
     <hr class="section-sep"/>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <button onclick="assetInfoMonthMove(-1,'${asset.id}','${acc.id}')" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:13px;color:var(--txt2);cursor:pointer;">←</button>
-        <div style="font-size:13px;font-weight:600;color:var(--txt);min-width:120px;text-align:center;">${MONTHS_UK[assetInfoMonth.month]} ${assetInfoMonth.year}</div>
-        <button onclick="assetInfoMonthMove(1,'${asset.id}','${acc.id}')" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:13px;color:var(--txt2);cursor:pointer;">→</button>
-      </div>
-      <span style="font-size:12px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em">Всі операції</span>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px">
+      <button onclick="assetInfoMonthMove(-1,'${asset.id}','${acc.id}')" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:13px;color:var(--txt2);cursor:pointer;">←</button>
+      <div style="font-size:13px;font-weight:600;color:var(--txt);min-width:120px;text-align:center;">${MONTHS_UK[assetInfoMonth.month]} ${assetInfoMonth.year}</div>
+      <button onclick="assetInfoMonthMove(1,'${asset.id}','${acc.id}')" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:13px;color:var(--txt2);cursor:pointer;">→</button>
     </div>
-    <div class="txn-list" id="assetInfoTxns">`;
+    <div class="txn-list" id="assetInfoTxns" data-asset-id="${asset.id}" data-acc-id="${acc.id}">`;
 
   if(!txns.length){
     html+=`<div style="color:var(--txt3);font-size:13px;text-align:center;padding:16px">Операцій за цей місяць немає</div>`;
   }else{
+    html+=`<div style="display:flex;align-items:center;gap:8px;padding:0 4px 6px;font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em">
+      <div style="flex:1">Опис</div>
+      <div style="width:78px;text-align:right">Витрати</div>
+      <div style="width:78px;text-align:right">Дохід</div>
+    </div>`;
     txns.slice().reverse().forEach(t=>{
       const pos=t.amount>0;
-      html+=`<div class="txn-row" style="position:relative">
-        <button onclick="deleteAssetTxn('${t.id}','${asset.id}')" style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:5px">✕</button>
-        <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(t.icon||'ti-receipt')}</div>
-        <div class="txn-info"><div class="txn-desc">${t.desc||t.cat}</div><div class="txn-meta">${t.cat||''} · ${t.date}</div></div>
-        <div class="txn-amt ${pos?'pos':'neg'}" style="margin-right:20px">${pos?'+':''}${fmt(t.amount,acc.currency)}</div>
+      html+=`<div class="ai-row-wrap">
+        <div class="ai-row-actions">
+          <button class="ai-act-add" data-acc="${acc.id}" data-asset="${asset.id}" title="Додати"><i class="ti ti-plus"></i></button>
+          <button class="ai-act-edit" data-id="${t.id}" title="Редагувати"><i class="ti ti-pencil"></i></button>
+          <button class="ai-act-del" data-id="${t.id}" data-asset="${asset.id}" title="Видалити"><i class="ti ti-trash"></i></button>
+        </div>
+        <div class="ai-row-content txn-row">
+          <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(t.icon||'ti-receipt')}</div>
+          <div class="txn-info"><div class="txn-desc">${t.desc||t.cat}</div><div class="txn-meta">${t.cat||''} · ${t.date}</div></div>
+          <div class="txn-amt neg" style="width:78px;text-align:right">${!pos?fmt(Math.abs(t.amount),acc.currency):'—'}</div>
+          <div class="txn-amt pos" style="width:78px;text-align:right">${pos?'+'+fmt(t.amount,acc.currency):'—'}</div>
+        </div>
       </div>`;
     });
   }
-  html+=`</div>`;
+  html+=`</div>
+    <hr class="section-sep"/>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <div style="flex:1;background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--txt3);margin-bottom:3px">Дохід за місяць</div>
+        <div style="font-size:14px;font-weight:600;color:#1D9E75">+${fmt(totalInc,acc.currency)}</div>
+      </div>
+      <div style="flex:1;background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--txt3);margin-bottom:3px">Витрати за місяць</div>
+        <div style="font-size:14px;font-weight:600;color:#D85A30">−${fmt(totalExp,acc.currency)}</div>
+      </div>
+    </div>`;
   document.getElementById('assetInfoContent').innerHTML=html;
+  initAssetInfoSwipe();
 }
+
+function initAssetInfoSwipe(){initSwipeRows('#assetInfoTxns .ai-row-content',AI_ACT_W);}
+
+document.getElementById('assetInfoContent')&&document.getElementById('assetInfoContent').addEventListener('click',e=>{
+  const addBtn=e.target.closest('.ai-act-add');
+  const editBtn=e.target.closest('.ai-act-edit');
+  const delBtn=e.target.closest('.ai-act-del');
+  if(!addBtn&&!editBtn&&!delBtn)return;
+  closeAllSwipeRows('#assetInfoTxns .ai-row-content');
+  if(addBtn){
+    const idx=ST.accounts.findIndex(a=>a.id===addBtn.dataset.acc);
+    if(idx>=0){closeModal('modalAssetInfo');selectAcc(idx);}
+  }else if(editBtn){
+    openEditTxn(editBtn.dataset.id);
+  }else if(delBtn){
+    deleteAssetTxn(delBtn.dataset.id,delBtn.dataset.asset);
+  }
+});
 
 function deleteAssetTxn(txnId,assetId){
   showConfirm('Видалити цю операцію?',()=>{
@@ -2749,6 +2803,12 @@ async function saveEditTxn(){
   }
 
   saveST();refreshAll();renderCalendar();closeModal('modalEditTxn');toast('Операцію оновлено!');
+  const aiTxns=document.getElementById('assetInfoTxns');
+  if(aiTxns){
+    const as=ST.assets.find(x=>x.id===aiTxns.dataset.assetId);
+    const ac=ST.accounts.find(x=>x.id===aiTxns.dataset.accId);
+    if(as&&ac)renderAssetInfoContent(as,ac);
+  }
 }
 
 /* swipe-to-reveal actions (generalized — used by #evTable, #dayEvList and #accList) */
@@ -2757,8 +2817,9 @@ const EV_ACT_W=120;
 const DAYEV_ACT_W=108;
 const ACC_ACT_W=162;
 const TXN_ACT_W=108;
-const SWIPE_CONTENT_SELECTORS=['.ev-row-content','.dayev-row-content','.acc-row'];
-const SWIPE_WRAP_SELECTORS=['.ev-row-wrap','.dayev-row-wrap','.acc-row-wrap'];
+const AI_ACT_W=162;
+const SWIPE_CONTENT_SELECTORS=['.ev-row-content','.dayev-row-content','.acc-row','.ai-row-content'];
+const SWIPE_WRAP_SELECTORS=['.ev-row-wrap','.dayev-row-wrap','.acc-row-wrap','.ai-row-wrap'];
 function initSwipeRows(rowSelector,actWidth){
   document.querySelectorAll(rowSelector).forEach(el=>{
     let startX=0,startY=0,curX=0,dragging=false,locked=null,wasOpen=false;
