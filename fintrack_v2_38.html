@@ -210,10 +210,10 @@ tr:hover .del-row-btn{opacity:1;}
 .asset-cards{display:none;flex-direction:column;gap:10px;}
 .asset-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--r);padding:12px;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.04);}
 .asset-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.asset-card-body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
-.asset-card-stat{text-align:center;}
-.asset-card-stat-lbl{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
-.asset-card-stat-val{font-size:13px;font-weight:600;}
+.asset-card-body{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.asset-card-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;min-height:58px;}
+.asset-card-stat-lbl{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;}
+.asset-card-stat-val{font-size:14px;font-weight:700;line-height:1.2;}
 .asset-card-actions{display:flex;gap:6px;justify-content:flex-end;}
 .asset-card-btn{background:var(--card2);border:0.5px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;transition:all .15s;color:var(--txt2);}
 .asset-card-btn:hover{background:var(--bg3);border-color:var(--border2);}
@@ -728,7 +728,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.3</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.5</span>
     </div>
 
     <!-- Курси валют -->
@@ -1274,7 +1274,6 @@ function saveST(){
     }
     lastSnapshot=cur;
   }catch(e){console.warn('[Undo] snapshot error:',e.message);}
-  backupSTLocally();
   setSyncStatus('pending');
 }
 function undoLastAction(){
@@ -1289,7 +1288,6 @@ function undoLastAction(){
   renderCalendar();
   syncCategorySelects();
   loadSettingsRates();
-  backupSTLocally();
   setSyncStatus('pending');
   updateUndoBtn();
   toast('Дію відмінено');
@@ -1382,6 +1380,7 @@ function confirmRestoreLocalBackup(key){
 async function syncToServer(){
   if(!navigator.onLine){
     setSyncStatus('offline');
+    backupSTLocally();
     toast('⚠️ Немає інтернету. Зміни збережено локально',false);
     return;
   }
@@ -1390,6 +1389,7 @@ async function syncToServer(){
     const ok=await Users.save(ST);
     if(ok){
       setSyncStatus('synced');
+      backupSTLocally();
       toast('✅ Дані збережено на сервері');
     }else{
       const user=Users.activeUser();
@@ -1398,12 +1398,14 @@ async function syncToServer(){
         toast('⚠️ Увійдіть в обліковий запис для синхронізації',false);
       }else{
         setSyncStatus(navigator.onLine?'error':'offline','Сервер не підтвердив запис');
+        backupSTLocally();
         toast('⚠️ Помилка синхронізації. Перевірте підключення',false);
       }
     }
   }catch(e){
     console.warn('Sync error:',e);
     setSyncStatus(navigator.onLine?'error':'offline',e.message);
+    backupSTLocally();
     toast('⚠️ Помилка синхронізації',false);
   }
 }
@@ -1978,7 +1980,6 @@ async function doExpense(){
   if(!amt||amt<=0){toast('Вкажіть суму',false);return;}
   const rates=await fetchNBURates(date);
   const amtAcc=convertCurrency(amt,fromCur,a.currency,rates);
-  if(a.balance<amtAcc){toast('Недостатньо коштів',false);return;}
   a.balance-=amtAcc;
   const note=fromCur!==a.currency?` (${fmt(amt,fromCur)})`:'';
   ST.transactions.push({id:uid(),accId:a.id,amount:-amtAcc,desc:desc+note,cat:desc,icon:'ti-arrow-up-right',date,type:'expense'});
@@ -2583,7 +2584,6 @@ function processRecurringEvents(){
 }
 
 function renderCalendar(){
-  processRecurringEvents();
   const now=new Date();
   if(calY===undefined){calY=now.getFullYear();calM=now.getMonth();}
   document.getElementById('calMonth').textContent=MONTHS_UK[calM]+' '+calY;
@@ -2613,7 +2613,6 @@ function renderCalendar(){
   document.getElementById('calDays').innerHTML=html;
   renderUpcoming();
   renderEvTable();
-  refreshCalendarRates();
 }
 function calMove(dir){calM+=dir;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}renderCalendar();}
 
@@ -3484,6 +3483,7 @@ function refreshAll(){renderAccounts();renderAssets();}
       refreshAll();
       syncCategorySelects();
       loadSettingsRates();
+      refreshCalendarRates();
       setTimeout(hideLoad,200);
     }
   }catch(e){console.warn('Init error:',e);hideLoad();}
