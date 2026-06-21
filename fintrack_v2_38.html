@@ -302,9 +302,8 @@ tr:hover .del-row-btn{opacity:1;}
 .fab-item-ico{width:50px;height:50px;border-radius:50%;background:var(--card);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 2px 10px rgba(0,0,0,.1);flex-shrink:0;}
 
 /* ── UNDO FAB ── */
-.undo-fab{display:none;position:fixed;bottom:24px;left:24px;width:50px;height:50px;border-radius:50%;background:var(--card);border:0.5px solid var(--border);cursor:pointer;font-size:20px;color:var(--txt2);align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:100;transition:transform .15s,background .15s,color .15s;}
-.undo-fab:hover{transform:scale(1.08);background:var(--pu6);color:#fff;border-color:var(--pu6);}
-.undo-fab-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--or4);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;line-height:1;}
+.undo-fab{display:none;position:fixed;bottom:24px;left:24px;width:50px;height:50px;border-radius:50%;background:var(--or4);border:none;cursor:pointer;font-size:20px;color:#fff;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(232,101,48,.35);z-index:100;transition:transform .18s,opacity .18s;opacity:.45;}
+.undo-fab:hover{transform:scale(1.08);opacity:1;}
 @media(max-width:700px){
   .undo-fab{bottom:112px;}
 }
@@ -722,7 +721,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.1</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.2</span>
     </div>
 
     <!-- Курси валют -->
@@ -810,7 +809,6 @@ tr:hover .del-row-btn{opacity:1;}
 <button class="fab" id="fab" onclick="toggleFab()" aria-label="Додати"><i class="ti ti-plus" id="fabIcon"></i></button>
 <button class="undo-fab" id="undoFab" onclick="undoLastAction()" title="Відмінити останню дію" aria-label="Відмінити останню дію" style="display:none">
   <i class="ti ti-arrow-back-up"></i>
-  <span class="undo-fab-badge" id="undoFabCount">0</span>
 </button>
 <div class="fab-menu hidden" id="fabMenu">
   <div class="fab-item" onclick="openAddAcc();closeFab()">
@@ -950,7 +948,12 @@ tr:hover .del-row-btn{opacity:1;}
         </div>
       </div>
       <div class="field"><label>Дата</label><input type="date" id="qExpDate" style="font-size:12px"/></div>
-      <div class="field"><label>Опис</label><textarea id="qExpDesc" placeholder="на що (можна списком, кожен товар з нового рядка)" rows="3" style="resize:vertical;min-height:60px"></textarea></div>
+      <div class="field"><label>Опис</label>
+        <div style="position:relative">
+          <textarea id="qExpDesc" placeholder="на що (можна списком, кожен товар з нового рядка)" rows="8" style="resize:vertical;min-height:160px;padding-right:40px"></textarea>
+          <button type="button" onclick="insertCheckmark('qExpDesc')" title="Вставити галочку" aria-label="Вставити галочку" style="position:absolute;right:6px;bottom:6px;width:28px;height:28px;border-radius:50%;background:var(--gr);border:none;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.85;box-shadow:0 2px 6px rgba(0,0,0,.15)">✓</button>
+        </div>
+      </div>
       <div id="qExpInfo" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:10px;margin-bottom:10px;font-size:12px;display:none">
         <div style="color:var(--txt3);margin-bottom:4px">Конвертація:</div>
         <div id="qExpRate" style="color:var(--txt2)"></div>
@@ -1903,6 +1906,17 @@ function syncCategorySelects(){
   // категорії операцій прибрано — функція лишена як no-op,
   // щоб не чіпати всі виклики по коду
 }
+function insertCheckmark(id){
+  const ta=document.getElementById(id);
+  if(!ta)return;
+  const start=ta.selectionStart??ta.value.length;
+  const end=ta.selectionEnd??ta.value.length;
+  const mark='✅ ';
+  ta.value=ta.value.slice(0,start)+mark+ta.value.slice(end);
+  const pos=start+mark.length;
+  ta.focus();
+  ta.setSelectionRange(pos,pos);
+}
 
 function renderTxns(){
   const list=document.getElementById('txnList');
@@ -1913,12 +1927,19 @@ function renderTxns(){
   list.innerHTML=txns.slice(0,20).map(t=>{
     const a=ST.accounts.find(x=>x.id===t.accId);
     const pos=t.amount>0;
-    return `<div class="txn-row">
-      <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(t.icon||'ti-receipt')}</div>
-      <div class="txn-info"><div class="txn-desc">${stripIconPrefix(t.desc||t.cat)}</div><div class="txn-meta">${t.cat&&stripIconPrefix(t.cat)!==stripIconPrefix(t.desc||t.cat)?stripIconPrefix(t.cat)+' · ':''}${t.date}</div></div>
-      <div class="txn-amt ${pos?'pos':'neg'}">${pos?'+':''}${a?fmt(t.amount,a.currency):fmt(t.amount,'UAH')}</div>
+    return `<div class="dayev-row-wrap">
+      <div class="dayev-row-actions">
+        <button class="dayev-edit" data-id="${t.id}" data-src="txn" title="Редагувати"><i class="ti ti-pencil"></i></button>
+        <button class="dayev-del" data-id="${t.id}" data-src="txn" title="Видалити"><i class="ti ti-trash"></i></button>
+      </div>
+      <div class="dayev-row-content txn-row">
+        <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(t.icon||'ti-receipt')}</div>
+        <div class="txn-info"><div class="txn-desc">${stripIconPrefix(t.desc||t.cat)}</div><div class="txn-meta">${t.cat&&stripIconPrefix(t.cat)!==stripIconPrefix(t.desc||t.cat)?stripIconPrefix(t.cat)+' · ':''}${t.date}</div></div>
+        <div class="txn-amt ${pos?'pos':'neg'}">${pos?'+':''}${a?fmt(t.amount,a.currency):fmt(t.amount,'UAH')}</div>
+      </div>
     </div>`;
   }).join('');
+  initTxnSwipe();
 }
 
 function selectAcc(i){
@@ -2733,6 +2754,7 @@ let evSwipeOpenEl=null;
 const EV_ACT_W=120;
 const DAYEV_ACT_W=108;
 const ACC_ACT_W=162;
+const TXN_ACT_W=108;
 const SWIPE_CONTENT_SELECTORS=['.ev-row-content','.dayev-row-content','.acc-row'];
 const SWIPE_WRAP_SELECTORS=['.ev-row-wrap','.dayev-row-wrap','.acc-row-wrap'];
 function initSwipeRows(rowSelector,actWidth){
@@ -2793,6 +2815,7 @@ function closeAllSwipeRowsEverywhere(){
 function initEvSwipe(){initSwipeRows('#evTable .ev-row-content',EV_ACT_W);}
 function initDayEvSwipe(){initSwipeRows('#dayEvList .dayev-row-content',DAYEV_ACT_W);}
 function initAccSwipe(){initSwipeRows('#accList .acc-row',ACC_ACT_W);}
+function initTxnSwipe(){initSwipeRows('#txnList .dayev-row-content',TXN_ACT_W);}
 document.addEventListener('pointerdown',e=>{
   if(!evSwipeOpenEl)return;
   const insideOpenWrap=SWIPE_WRAP_SELECTORS.some(sel=>e.target.closest(sel));
@@ -2817,6 +2840,15 @@ document.getElementById('dayEvList')&&document.getElementById('dayEvList').addEv
   closeAllSwipeRows('.dayev-row-content');
   if(editBtn){src==='event'?openEditEvent(id):openEditTxn(id);}
   else{src==='event'?deleteEvent(id):deleteTxnGlobal(id);}
+});
+document.getElementById('txnList')&&document.getElementById('txnList').addEventListener('click',e=>{
+  const editBtn=e.target.closest('.dayev-edit');
+  const delBtn=e.target.closest('.dayev-del');
+  if(!editBtn&&!delBtn)return;
+  const btn=editBtn||delBtn;
+  const id=btn.dataset.id;
+  closeAllSwipeRows('#txnList .dayev-row-content');
+  if(editBtn)openEditTxn(id);else deleteTxnGlobal(id);
 });
 document.getElementById('accList')&&document.getElementById('accList').addEventListener('click',e=>{
   const addBtn=e.target.closest('.acc-act-add');
