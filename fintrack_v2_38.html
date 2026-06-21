@@ -713,7 +713,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.4.9</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.0</span>
     </div>
 
     <!-- Курси валют -->
@@ -746,28 +746,6 @@ tr:hover .del-row-btn{opacity:1;}
         <button class="export-btn" onclick="exportRates()" style="flex:1;justify-content:center">📤 Експорт курсів</button>
         <button class="export-btn" onclick="document.getElementById('rateImportFile').click()" style="flex:1;justify-content:center">📥 Імпорт курсів</button>
         <input type="file" id="rateImportFile" accept=".json" onchange="importRates(this)" style="display:none"/>
-      </div>
-    </div>
-
-    <div class="panel" style="margin-bottom:14px">
-      <div class="panel-hdr">
-        <span class="panel-title">Категорії витрат</span>
-      </div>
-      <div class="cat-list" id="catExpList"></div>
-      <div class="cat-add-row">
-        <input type="text" id="catExpInput" placeholder="Нова категорія витрат..."/>
-        <button onclick="addCategory('expense')">+ Додати</button>
-      </div>
-    </div>
-
-    <div class="panel" style="margin-bottom:14px">
-      <div class="panel-hdr">
-        <span class="panel-title">Категорії доходів</span>
-      </div>
-      <div class="cat-list" id="catIncList"></div>
-      <div class="cat-add-row">
-        <input type="text" id="catIncInput" placeholder="Нова категорія доходів..."/>
-        <button onclick="addCategory('income')">+ Додати</button>
       </div>
     </div>
 
@@ -923,10 +901,8 @@ tr:hover .del-row-btn{opacity:1;}
         </select>
       </div>
     </div>
-    <div class="frow">
-      <div class="field"><label>Дата</label><input type="date" id="mEvDate"/></div>
-      <div class="field"><label>Рахунок</label><select id="mEvAcc"></select></div>
-    </div>
+    <div class="field"><label>Рахунок</label><select id="mEvAcc"></select></div>
+    <div class="field"><label>Дата</label><input type="date" id="mEvDate"/></div>
     <div class="field"><label>ПОВТОРЕННЯ</label>
       <select id="mEvRepeat">
         <option value="once">Одноразово</option><option value="weekly">Щотижня</option>
@@ -960,10 +936,7 @@ tr:hover .del-row-btn{opacity:1;}
           </select>
         </div>
       </div>
-      <div class="frow">
-        <div class="field"><label>Категорія</label><select id="qExpCat"></select></div>
-        <div class="field"><label>Дата</label><input type="date" id="qExpDate"/></div>
-      </div>
+      <div class="field"><label>Дата</label><input type="date" id="qExpDate" style="font-size:12px"/></div>
       <div class="field"><label>Опис</label><textarea id="qExpDesc" placeholder="на що (можна списком, кожен товар з нового рядка)" rows="3" style="resize:vertical;min-height:60px"></textarea></div>
       <div id="qExpInfo" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:10px;margin-bottom:10px;font-size:12px;display:none">
         <div style="color:var(--txt3);margin-bottom:4px">Конвертація:</div>
@@ -985,10 +958,7 @@ tr:hover .del-row-btn{opacity:1;}
           </select>
         </div>
       </div>
-      <div class="frow">
-        <div class="field"><label>Категорія</label><select id="qIncCat"></select></div>
-        <div class="field"><label>Дата</label><input type="date" id="qIncDate"/></div>
-      </div>
+      <div class="field"><label>Дата</label><input type="date" id="qIncDate" style="font-size:12px"/></div>
       <div class="field"><label>Опис</label><textarea id="qIncDesc" placeholder="звідки (можна списком)" rows="2" style="resize:vertical;min-height:44px"></textarea></div>
       <div id="qIncInfo" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:10px;margin-bottom:10px;font-size:12px;display:none">
         <div style="color:var(--txt3);margin-bottom:4px">Конвертація:</div>
@@ -1053,19 +1023,31 @@ tr:hover .del-row-btn{opacity:1;}
 
 <!-- MODAL: EDIT TRANSACTION -->
 <div class="modal-bg hidden" id="modalEditTxn" style="z-index:350">
-  <div class="modal" style="max-width:380px">
+  <div class="modal" style="max-width:400px">
     <div class="modal-title">Редагувати операцію <div class="close-x" onclick="closeModal('modalEditTxn')">✕</div></div>
     <input type="hidden" id="etId" value=""/>
     <div class="toggle-bar" id="etTypeToggleWrap">
       <div class="tog on-in" id="togEtIn" onclick="setEtType('income')">↙ Надходження</div>
       <div class="tog" id="togEtOut" onclick="setEtType('expense')">↗ Витрата</div>
     </div>
-    <div class="field"><label>Опис</label><input id="etDesc" placeholder="опис"/></div>
-    <div class="frow" style="grid-template-columns:38% 62%">
-      <div class="field"><label>Дата</label><input type="date" id="etDate" style="font-size:12px;padding:9px 6px"/></div>
-      <div class="field"><label>Сума</label><input type="number" id="etAmt" placeholder="0.00"/></div>
+    <div class="field"><label>Назва</label><input id="etDesc" placeholder="опис"/></div>
+    <div class="frow">
+      <div class="field"><label>Сума</label><input type="number" id="etAmt" placeholder="0"/></div>
+      <div class="field"><label>Валюта</label>
+        <select id="etCurrency">
+          <option value="UAH">₴ UAH</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option>
+        </select>
+      </div>
     </div>
     <div class="field"><label>Рахунок</label><select id="etAcc"></select></div>
+    <div class="field"><label>Дата</label><input type="date" id="etDate"/></div>
+    <div class="field" id="etRepeatWrap"><label>ПОВТОРЕННЯ</label>
+      <select id="etRepeat">
+        <option value="once">Одноразово</option><option value="weekly">Щотижня</option>
+        <option value="monthly">Щомісяця</option><option value="quarterly">Щокварталу</option>
+        <option value="yearly">Щороку</option>
+      </select>
+    </div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="closeModal('modalEditTxn')">Скасувати</button>
       <button class="btn btn-primary" onclick="saveEditTxn()">Зберегти</button>
@@ -1240,65 +1222,22 @@ function setSyncStatus(state,detail){
   chip.title=title;
 }
 
-// Реальний стан мережі браузера — оновлюємо чіп миттєво, незалежно від того, чи саме зараз триває запис
+// Реальний стан мережі браузера — лише оновлюємо індикатор, сервер
+// нічого не пише автоматично (тільки за ручним натисканням кнопки).
 window.addEventListener('online',()=>{
-  syncToServer();
+  if(syncStatus==='offline')setSyncStatus('pending');
 });
 window.addEventListener('offline',()=>{
   setSyncStatus('offline');
 });
 
-// Дебаунс-збереження: локальний бекап — миттєво при кожній зміні,
-// а запис на сервер — лише через паузу в діях (щоб не плодити версію
-// бекапу на КОЖЕН крок). Ручне натискання на чіп — миттєвий примусовий save.
-let _saveDebounceTimer=null;
-const SAVE_DEBOUNCE_MS=4000;
-
+// Збереження на сервер відбувається ЛИШЕ за ручним натисканням
+// кнопки/чіпа синхронізації (syncToServer). saveST() робить тільки
+// миттєвий локальний бекап і позначає статус "є незбережені зміни".
 function saveST(){
   backupSTLocally();
   setSyncStatus('pending');
-  if(_saveDebounceTimer)clearTimeout(_saveDebounceTimer);
-  _saveDebounceTimer=setTimeout(()=>{
-    _saveDebounceTimer=null;
-    flushSaveToServer();
-  },SAVE_DEBOUNCE_MS);
 }
-
-async function flushSaveToServer(){
-  if(!navigator.onLine){
-    setSyncStatus('offline');
-    return;
-  }
-  setSyncStatus('syncing');
-  try{
-    const ok=await Users.save(ST);
-    if(ok){
-      setSyncStatus('synced');
-    }else{
-      setSyncStatus(navigator.onLine?'error':'offline','Сервер не підтвердив запис');
-    }
-  }catch(e){
-    console.warn('[ST] Збереження не вдалося:',e);
-    setSyncStatus(navigator.onLine?'error':'offline',e.message);
-  }
-}
-
-// Якщо є незбережені зміни (таймер ще не спрацював) — примусово зберігаємо
-// одразу, коли вкладку згортають/закривають, щоб нічого не загубилось.
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='hidden'&&_saveDebounceTimer){
-    clearTimeout(_saveDebounceTimer);
-    _saveDebounceTimer=null;
-    flushSaveToServer();
-  }
-});
-window.addEventListener('beforeunload',()=>{
-  if(_saveDebounceTimer){
-    clearTimeout(_saveDebounceTimer);
-    _saveDebounceTimer=null;
-    flushSaveToServer();
-  }
-});
 
 /* ═══════════════════════════════════════════
    ЛОКАЛЬНІ АВТОБЕКАПИ (localStorage)
@@ -1378,7 +1317,6 @@ function confirmRestoreLocalBackup(key){
 }
 
 async function syncToServer(){
-  if(_saveDebounceTimer){clearTimeout(_saveDebounceTimer);_saveDebounceTimer=null;}
   if(!navigator.onLine){
     setSyncStatus('offline');
     toast('⚠️ Немає інтернету. Зміни збережено локально',false);
@@ -1742,7 +1680,7 @@ function showScreen(name,btn){
   document.getElementById('topbarTitle').textContent=TITLES[name];
   if(name==='reports')setTimeout(()=>{renderReport1();renderReport2();},30);
   if(name==='calendar')renderCalendar();
-  if(name==='settings'){renderCategories();loadSettingsRates();renderLocalBackupsList();}
+  if(name==='settings'){loadSettingsRates();renderLocalBackupsList();}
 }
 
 /* ═══════════════════════════════════════════
@@ -1908,10 +1846,8 @@ function syncAccSelects(){
 }
 
 function syncCategorySelects(){
-  const expSel=document.getElementById('qExpCat');
-  const incSel=document.getElementById('qIncCat');
-  if(expSel)expSel.innerHTML=ST.categories.expense.map(c=>`<option>${c}</option>`).join('');
-  if(incSel)incSel.innerHTML=ST.categories.income.map(c=>`<option>${c}</option>`).join('');
+  // категорії операцій прибрано — функція лишена як no-op,
+  // щоб не чіпати всі виклики по коду
 }
 
 function renderTxns(){
@@ -1955,8 +1891,7 @@ async function doExpense(){
   const a=ST.accounts[ST.selAcc];
   const amt=parseFloat(document.getElementById('qExpAmt').value);
   const fromCur=document.getElementById('qExpCurrency').value;
-  const cat=document.getElementById('qExpCat').value;
-  const desc=document.getElementById('qExpDesc').value||cat;
+  const desc=document.getElementById('qExpDesc').value||'Витрата';
   const date=document.getElementById('qExpDate').value||today();
   if(!amt||amt<=0){toast('Вкажіть суму',false);return;}
   const rates=await fetchNBURates(date);
@@ -1964,7 +1899,7 @@ async function doExpense(){
   if(a.balance<amtAcc){toast('Недостатньо коштів',false);return;}
   a.balance-=amtAcc;
   const note=fromCur!==a.currency?` (${fmt(amt,fromCur)})`:'';
-  ST.transactions.push({id:uid(),accId:a.id,amount:-amtAcc,desc:desc+note,cat,icon:cat.split(' ')[0],date,type:'expense'});
+  ST.transactions.push({id:uid(),accId:a.id,amount:-amtAcc,desc:desc+note,cat:desc,icon:'ti-arrow-up-right',date,type:'expense'});
   saveST(); refreshAll(); document.getElementById('qExpAmt').value=''; document.getElementById('qExpDesc').value='';
   document.getElementById('qExpInfo').style.display='none';
   toast('Витрату записано!');
@@ -1973,15 +1908,14 @@ async function doIncome(){
   const a=ST.accounts[ST.selAcc];
   const amt=parseFloat(document.getElementById('qIncAmt').value);
   const fromCur=document.getElementById('qIncCurrency').value;
-  const cat=document.getElementById('qIncCat').value;
-  const desc=document.getElementById('qIncDesc').value||cat;
+  const desc=document.getElementById('qIncDesc').value||'Дохід';
   const date=document.getElementById('qIncDate').value||today();
   if(!amt||amt<=0){toast('Вкажіть суму',false);return;}
   const rates=await fetchNBURates(date);
   const amtAcc=convertCurrency(amt,fromCur,a.currency,rates);
   a.balance+=amtAcc;
   const note=fromCur!==a.currency?` (${fmt(amt,fromCur)})`:'';
-  ST.transactions.push({id:uid(),accId:a.id,amount:amtAcc,desc:desc+note,cat,icon:cat.split(' ')[0],date,type:'income'});
+  ST.transactions.push({id:uid(),accId:a.id,amount:amtAcc,desc:desc+note,cat:desc,icon:'ti-arrow-down-left',date,type:'income'});
   saveST(); refreshAll(); document.getElementById('qIncAmt').value=''; document.getElementById('qIncDesc').value='';
   document.getElementById('qIncInfo').style.display='none';
   toast('Дохід записано!');
@@ -2666,34 +2600,77 @@ function openEditTxn(id){
   const sel=document.getElementById('etAcc');
   sel.innerHTML=ST.accounts.map(a=>`<option value="${a.id}">${stripIconPrefix(a.name)}</option>`).join('');
   sel.value=t.accId||'';
+  const acc=ST.accounts.find(a=>a.id===t.accId);
+  document.getElementById('etCurrency').value=acc?acc.currency:'UAH';
+  const repeatWrap=document.getElementById('etRepeatWrap');
+  if(t.type==='transfer'){
+    repeatWrap.style.display='none';
+  }else{
+    repeatWrap.style.display='';
+    const tpl=t.eventTplId?ST.events.find(e=>e.id===t.eventTplId):null;
+    document.getElementById('etRepeat').value=tpl?tpl.repeat:'once';
+  }
   openModal('modalEditTxn');
 }
 
-function saveEditTxn(){
+async function saveEditTxn(){
   const id=document.getElementById('etId').value;
   const t=ST.transactions.find(x=>x.id===id);
   if(!t)return;
   const newAmtAbs=parseFloat(document.getElementById('etAmt').value);
   if(!newAmtAbs||newAmtAbs<=0){toast('Вкажіть коректну суму',false);return;}
   const newAccId=document.getElementById('etAcc').value;
+  const newAcc=ST.accounts.find(a=>a.id===newAccId)||ST.accounts.find(a=>a.id===t.accId);
+  if(!newAcc){toast('Виберіть рахунок',false);return;}
   const oldAcc=ST.accounts.find(a=>a.id===t.accId);
   if(oldAcc)oldAcc.balance-=t.amount;
+
   let newType=t.type;
   if(t.type!=='transfer')newType=etType;
+
+  const fromCur=document.getElementById('etCurrency').value;
+  const date=document.getElementById('etDate').value||t.date;
+  const rates=await fetchNBURates(date);
+  const amtAcc=convertCurrency(newAmtAbs,fromCur,newAcc.currency,rates);
   const sign=newType==='income'?1:-1;
-  const newAmount=sign*newAmtAbs;
-  const newAcc=ST.accounts.find(a=>a.id===newAccId)||oldAcc;
-  if(newAcc)newAcc.balance+=newAmount;
+  const newAmount=sign*amtAcc;
+
+  newAcc.balance+=newAmount;
   t.amount=newAmount;
   t.type=newType;
-  t.accId=newAcc?newAcc.id:t.accId;
+  t.accId=newAcc.id;
+  t.date=date;
+
   const desc=document.getElementById('etDesc').value.trim();
   if(desc){
     if(t.cat===t.desc)t.cat=desc; // подія: назва = категорія — синхронізуємо
     t.desc=desc;
   }
-  const date=document.getElementById('etDate').value;
-  if(date)t.date=date;
+
+  // ── Повторення ──
+  if(t.type!=='transfer'){
+    const newRepeat=document.getElementById('etRepeat').value;
+    if(t.eventTplId){
+      const tpl=ST.events.find(e=>e.id===t.eventTplId);
+      if(tpl){
+        tpl.name=desc||tpl.name;
+        tpl.amount=newAmtAbs;
+        tpl.currency=fromCur;
+        tpl.accId=newAcc.id;
+        tpl.type=newType;
+        tpl.repeat=newRepeat;
+        if(newRepeat==='once'){
+          t.eventTplId=null;
+          ST.events=ST.events.filter(e=>e.id!==tpl.id);
+        }
+      }
+    }else if(newRepeat!=='once'){
+      const tplId=uid();
+      ST.events.push({id:tplId,type:newType,name:desc||t.desc,amount:newAmtAbs,currency:fromCur,date,repeat:newRepeat,accId:newAcc.id});
+      t.eventTplId=tplId;
+    }
+  }
+
   saveST();refreshAll();renderCalendar();closeModal('modalEditTxn');toast('Операцію оновлено!');
 }
 
@@ -3225,43 +3202,12 @@ async function importRates(input){
   input.value='';
 }
 
-function renderCategories(){
-  const expList=document.getElementById('catExpList');
-  const incList=document.getElementById('catIncList');
-  expList.innerHTML=ST.categories.expense.map(c=>`<div class="cat-chip">${c}<button class="cat-del" onclick="deleteCategory('expense','${c.replace(/'/g,"\\'")}')">✕</button></div>`).join('');
-  incList.innerHTML=ST.categories.income.map(c=>`<div class="cat-chip">${c}<button class="cat-del" onclick="deleteCategory('income','${c.replace(/'/g,"\\'")}')">✕</button></div>`).join('');
-}
-
-function addCategory(type){
-  const input=document.getElementById(type==='expense'?'catExpInput':'catIncInput');
-  const val=input.value.trim();
-  if(!val){toast('Введіть назву категорії',false);return;}
-  if(ST.categories[type].includes(val)){toast('Така категорія вже є',false);return;}
-  ST.categories[type].push(val);
-  saveST();
-  renderCategories();
-  syncCategorySelects();
-  input.value='';
-  toast('Категорію додано!');
-}
-
-function deleteCategory(type,name){
-  showConfirm(`Видалити категорію "${name}"?`,()=>{
-    ST.categories[type]=ST.categories[type].filter(c=>c!==name);
-    saveST();
-    renderCategories();
-    syncCategorySelects();
-    toast('Категорію видалено');
-  });
-}
-
 async function exportCSV(){
-  const rows=[['Дата','Тип','Категорія','Опис','Сума','Рахунок','Валюта']];
+  const rows=[['Дата','Тип','Опис','Сума','Рахунок','Валюта']];
   ST.transactions.filter(t=>t.cat!=='💰 Старт'&&t.cat!=='⚙️ Система').sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
     const acc=ST.accounts.find(x=>x.id===t.accId);
     const type=t.type==='income'?'Дохід':t.type==='expense'?'Витрата':'Переказ';
-    const sign=t.amount>0?'+':t.amount<0?'-':'';
-    rows.push([t.date,type,t.cat||'',t.desc||'',t.amount,acc?acc.name:'',acc?acc.currency:'']);
+    rows.push([t.date,type,t.desc||'',t.amount,acc?acc.name:'',acc?acc.currency:'']);
   });
   const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const fileName=`fintrack_export_${today()}.csv`;
