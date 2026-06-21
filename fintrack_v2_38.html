@@ -403,8 +403,6 @@ tr:hover .del-row-btn{opacity:1;}
   .grid2,.cal-top{grid-template-columns:1fr;}
   .stat-grid-4{grid-template-columns:1fr 1fr;}
   .hero-amount{font-size:26px;}
-  .tbl-wrap{display:none;}
-  .asset-cards{display:flex;}
 
   /* Збільшена нижня навігація — легше потрапити пальцем */
   .bottom-nav{padding:8px 4px env(safe-area-inset-bottom,10px) 4px;}
@@ -576,17 +574,15 @@ tr:hover .del-row-btn{opacity:1;}
         <thead>
           <tr>
             <th style="width:40%">Назва</th>
-            <th style="width:30%" class="r">Вартість</th>
             <th style="width:30%" class="r">Чистий потік</th>
+            <th style="width:30%" class="r">Вартість</th>
           </tr>
         </thead>
         <tbody id="assetBody">
-          <tr><td colspan="4" style="text-align:center;padding:28px;color:var(--txt3);font-size:13px">Ще нічого немає — додайте перший запис</td></tr>
+          <tr><td colspan="3" style="text-align:center;padding:28px;color:var(--txt3);font-size:13px">Ще нічого немає — додайте перший запис</td></tr>
         </tbody>
       </table>
     </div>
-
-    <div class="asset-cards" id="assetCards"></div>
 
   </div>
 
@@ -728,7 +724,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.5</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.6</span>
     </div>
 
     <!-- Курси валют -->
@@ -1028,6 +1024,18 @@ tr:hover .del-row-btn{opacity:1;}
   <div class="modal">
     <div class="modal-title">Деталізація активу <div class="close-x" onclick="closeModal('modalAssetInfo')">✕</div></div>
     <div id="assetInfoContent"></div>
+  </div>
+</div>
+
+<!-- MODAL: ASSET ACTION MENU -->
+<div class="modal-bg hidden" id="modalAssetMenu">
+  <div class="modal" style="max-width:320px">
+    <div class="modal-title"><span id="assetMenuTitle">Актив</span> <div class="close-x" onclick="closeModal('modalAssetMenu')">✕</div></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-ghost" id="assetMenuInfoBtn" style="display:flex;align-items:center;justify-content:flex-start;gap:8px"><i class="ti ti-info-circle"></i> Інфо</button>
+      <button class="btn btn-ghost" id="assetMenuEditBtn" style="display:flex;align-items:center;justify-content:flex-start;gap:8px"><i class="ti ti-pencil"></i> Редагувати</button>
+      <button class="btn btn-ghost" id="assetMenuDeleteBtn" style="display:flex;align-items:center;justify-content:flex-start;gap:8px;color:var(--red)"><i class="ti ti-trash"></i> Видалити</button>
+    </div>
   </div>
 </div>
 
@@ -2185,8 +2193,7 @@ function renderAssets(){
 
   let html='';
   if(!ST.assets.length){
-    body.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--txt3);font-size:13px">Ще нічого немає</td></tr>`;
-    document.getElementById('assetCards').innerHTML='<div style="color:var(--txt3);font-size:13px;text-align:center;padding:28px">Ще нічого немає</div>';
+    body.innerHTML=`<tr><td colspan="3" style="text-align:center;padding:28px;color:var(--txt3);font-size:13px">Ще нічого немає</td></tr>`;
     updateAssetSummary(); return;
   }
   const getMonthTxns=(item)=>{
@@ -2199,11 +2206,12 @@ function renderAssets(){
   };
   const renderRows=(arr,grpLabel)=>{
     if(!arr.length)return '';
-    let r=`<tr class="group-row"><td colspan="4">${grpLabel}</td></tr>`;
+    let r=`<tr class="group-row"><td colspan="3">${grpLabel}</td></tr>`;
     arr.forEach(item=>{
       const isA=item.type==='asset';
       const{inc,exp,lnk}=getMonthTxns(item);
-      r+=`<tr>
+      const totalVal=getAssetTotalValue(item);
+      r+=`<tr onclick="openAssetMenu('${item.id}')" style="cursor:pointer">
         <td><div class="name-cell">
           <div class="tbl-ico" style="background:${isA?'rgba(29,158,117,.15)':'rgba(216,90,48,.15)'};color:${isA?'#1D9E75':'#D85A30'}">${renderIcon(item.icon||item.emoji)}</div>
           <div><div class="asset-name">${item.name}</div>
@@ -2213,13 +2221,8 @@ function renderAssets(){
             </div>
           </div>
         </div></td>
-        <td class="r ${item.value?isA?'val-pos':'val-neg':'val-neu'}">${item.value?fmt(getAssetTotalValue(item),item.currency):'—'}</td>
         <td class="r ${(inc-exp)>0?'val-pos':(inc-exp)<0?'val-neg':'val-neu'}">${(inc-exp)!==0?fmtSign(inc-exp,item.currency):'—'}</td>
-        <td style="white-space:nowrap">
-          ${lnk?`<button class="del-row-btn" onclick="showAssetInfo('${item.id}')" title="Інфо" style="opacity:1"><i class="ti ti-info-circle"></i></button>`:''}
-          <button class="del-row-btn" onclick="editAsset('${item.id}')" title="Редагувати" style="opacity:1"><i class="ti ti-pencil"></i></button>
-          <button class="del-row-btn" onclick="deleteAsset('${item.id}')" title="Видалити"><i class="ti ti-trash"></i></button>
-        </td>
+        <td class="r ${totalVal!==0?isA?'val-pos':'val-neg':'val-neu'}">${totalVal!==0?fmt(totalVal,item.currency):'—'}</td>
       </tr>`;
     });
     return r;
@@ -2227,50 +2230,6 @@ function renderAssets(){
   html+=renderRows(assets,'Активи');
   html+=renderRows(liabs,'Пасиви');
   body.innerHTML=html;
-
-  // Mobile cards
-  const cardsContainer=document.getElementById('assetCards');
-  let cardsHtml='';
-  const renderCards=(arr,grpLabel)=>{
-    if(!arr.length)return '';
-    let c=`<div style="font-size:11px;font-weight:500;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;padding:8px 4px">${grpLabel}</div>`;
-    arr.forEach(item=>{
-      const isA=item.type==='asset';
-      const{inc,exp,lnk}=getMonthTxns(item);
-      c+=`<div class="asset-card">
-        <div class="asset-card-header">
-          <div class="tbl-ico" style="background:${isA?'rgba(29,158,117,.15)':'rgba(216,90,48,.15)'};color:${isA?'#1D9E75':'#D85A30'}">${renderIcon(item.icon||item.emoji)}</div>
-          <div style="flex:1;min-width:0">
-            <div class="asset-name">${item.name}</div>
-            <div style="font-size:10px;color:var(--txt3);margin-top:2px">${item.cat}${lnk?' · '+renderIcon(lnk.icon||lnk.emoji)+' '+stripIconPrefix(lnk.name):''}</div>
-          </div>
-        </div>
-        <div class="asset-card-body">
-          <div class="asset-card-stat">
-            <div class="asset-card-stat-lbl">Вартість</div>
-            <div class="asset-card-stat-val ${item.value?isA?'c-gr':'c-or':'val-neu'}">${item.value?fmt(getAssetTotalValue(item),item.currency):'—'}</div>
-          </div>
-          <div class="asset-card-stat">
-            <div class="asset-card-stat-lbl">Чистий потік</div>
-            <div class="asset-card-stat-val ${(inc-exp)>0?'c-gr':(inc-exp)<0?'c-or':'val-neu'}">${(inc-exp)!==0?fmtSign(inc-exp,item.currency):'—'}</div>
-          </div>
-        </div>
-        <div class="asset-card-actions">
-          ${lnk?`<button class="asset-card-btn" onclick="showAssetInfo('${item.id}')">ℹ️ Інфо</button>`:''}
-          <button class="asset-card-btn" onclick="editAsset('${item.id}')">✏️ Редагувати</button>
-          <button class="asset-card-btn" onclick="deleteAsset('${item.id}')" style="color:var(--red)">🗑️ Видалити</button>
-        </div>
-      </div>`;
-    });
-    return c;
-  };
-  if(!ST.assets.length){
-    cardsHtml='<div style="color:var(--txt3);font-size:13px;text-align:center;padding:28px">Ще нічого немає</div>';
-  }else{
-    cardsHtml+=renderCards(assets,'Активи');
-    cardsHtml+=renderCards(liabs,'Пасиви');
-  }
-  cardsContainer.innerHTML=cardsHtml;
 
   updateAssetSummary();
 }
@@ -2301,7 +2260,26 @@ async function updateAssetSummary(){
   document.getElementById('asNet').className='stat-val '+(net>=0?'c-gr':'c-or');
 }
 
-function deleteAsset(id){ST.assets=ST.assets.filter(a=>a.id!==id);saveST();refreshAll();}
+function deleteAsset(id){
+  showConfirm('Видалити цей актив?',()=>{
+    ST.assets=ST.assets.filter(a=>a.id!==id);
+    saveST();refreshAll();
+    toast('Актив видалено');
+  });
+}
+
+function openAssetMenu(id){
+  const item=ST.assets.find(a=>a.id===id);
+  if(!item)return;
+  const lnk=item.linkedAccId?ST.accounts.find(a=>a.id===item.linkedAccId):null;
+  document.getElementById('assetMenuTitle').textContent=item.name;
+  const infoBtn=document.getElementById('assetMenuInfoBtn');
+  infoBtn.style.display=lnk?'flex':'none';
+  infoBtn.onclick=()=>{closeModal('modalAssetMenu');showAssetInfo(id);};
+  document.getElementById('assetMenuEditBtn').onclick=()=>{closeModal('modalAssetMenu');editAsset(id);};
+  document.getElementById('assetMenuDeleteBtn').onclick=()=>{closeModal('modalAssetMenu');deleteAsset(id);};
+  openModal('modalAssetMenu');
+}
 
 function assetMonthMove(dir){
   assetMonth.month+=dir;
@@ -2364,8 +2342,8 @@ function renderAssetInfoContent(asset,acc){
   }else{
     html+=`<div style="display:flex;align-items:center;gap:8px;padding:0 4px 6px;font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em">
       <div style="flex:1">Опис</div>
-      <div style="width:78px;text-align:right">Витрати</div>
-      <div style="width:78px;text-align:right">Дохід</div>
+      <div style="width:78px;text-align:center">Витрати</div>
+      <div style="width:78px;text-align:center">Дохід</div>
     </div>`;
     txns.slice().reverse().forEach(t=>{
       const pos=t.amount>0;
@@ -2378,8 +2356,8 @@ function renderAssetInfoContent(asset,acc){
         <div class="ai-row-content txn-row">
           <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(t.icon||'ti-receipt')}</div>
           <div class="txn-info"><div class="txn-desc">${t.desc||t.cat}</div><div class="txn-meta">${t.cat||''} · ${t.date}</div></div>
-          <div class="txn-amt neg" style="width:78px;text-align:right">${!pos?fmt(Math.abs(t.amount),acc.currency):'—'}</div>
-          <div class="txn-amt pos" style="width:78px;text-align:right">${pos?'+'+fmt(t.amount,acc.currency):'—'}</div>
+          <div class="txn-amt neg" style="width:78px;text-align:center">${!pos?fmt(Math.abs(t.amount),acc.currency):'—'}</div>
+          <div class="txn-amt pos" style="width:78px;text-align:center">${pos?'+'+fmt(t.amount,acc.currency):'—'}</div>
         </div>
       </div>`;
     });
