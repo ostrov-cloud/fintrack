@@ -300,6 +300,14 @@ tr:hover .del-row-btn{opacity:1;}
 .fab-menu.hidden{display:none;}
 .fab-item{display:flex;align-items:center;gap:8px;cursor:pointer;justify-content:flex-end;}
 .fab-item-ico{width:50px;height:50px;border-radius:50%;background:var(--card);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 2px 10px rgba(0,0,0,.1);flex-shrink:0;}
+
+/* ── UNDO FAB ── */
+.undo-fab{display:none;position:fixed;bottom:24px;left:24px;width:50px;height:50px;border-radius:50%;background:var(--card);border:0.5px solid var(--border);cursor:pointer;font-size:20px;color:var(--txt2);align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:100;transition:transform .15s,background .15s,color .15s;}
+.undo-fab:hover{transform:scale(1.08);background:var(--pu6);color:#fff;border-color:var(--pu6);}
+.undo-fab-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--or4);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;line-height:1;}
+@media(max-width:700px){
+  .undo-fab{bottom:112px;}
+}
 .fab-item-lbl{background:var(--card);border:0.5px solid var(--border);border-radius:9px;padding:7px 13px;font-size:14px;font-weight:500;white-space:nowrap;color:var(--txt);box-shadow:0 2px 8px rgba(0,0,0,.06);}
 
 /* ── TOAST ── */
@@ -600,7 +608,6 @@ tr:hover .del-row-btn{opacity:1;}
       <div class="side-panel">
         <div class="panel-hdr" style="margin-bottom:10px">
           <span class="panel-title">Найближчі 45 днів</span>
-          <button class="ev-add-btn" onclick="openAddEvent()">+ Подія</button>
         </div>
         <div id="upcomingList"></div>
       </div>
@@ -613,12 +620,14 @@ tr:hover .del-row-btn{opacity:1;}
           <span class="ev-table-title" id="evTableMonthLabel">Операції за місяць</span>
           <button onclick="calMove(1)" style="background:var(--card);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:13px;color:var(--txt2);cursor:pointer;">→</button>
         </div>
-        <button class="ev-add-btn" onclick="openAddEvent()">+ Нова подія</button>
       </div>
       <div class="ev-list-head">
         <span>Назва</span><span style="text-align:center">Повтор</span><span style="text-align:right">Сума</span><span style="text-align:left;padding-left:18px">Рахунок</span>
       </div>
       <div id="evTable" class="ev-list"></div>
+      <div style="display:flex;justify-content:center;padding:14px;border-top:0.5px solid var(--border)">
+        <button class="ev-add-btn" onclick="openAddEvent()">+ Нова подія</button>
+      </div>
     </div>
     <div class="panel" style="margin-top:14px">
       <div class="panel-hdr">
@@ -713,7 +722,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.0</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.1</span>
     </div>
 
     <!-- Курси валют -->
@@ -799,6 +808,10 @@ tr:hover .del-row-btn{opacity:1;}
 
 <!-- FAB -->
 <button class="fab" id="fab" onclick="toggleFab()" aria-label="Додати"><i class="ti ti-plus" id="fabIcon"></i></button>
+<button class="undo-fab" id="undoFab" onclick="undoLastAction()" title="Відмінити останню дію" aria-label="Відмінити останню дію" style="display:none">
+  <i class="ti ti-arrow-back-up"></i>
+  <span class="undo-fab-badge" id="undoFabCount">0</span>
+</button>
 <div class="fab-menu hidden" id="fabMenu">
   <div class="fab-item" onclick="openAddAcc();closeFab()">
     <div class="fab-item-lbl">Новий рахунок</div>
@@ -1198,7 +1211,7 @@ let syncErrorMsg='';
 
 const SYNC_CHIP_CFG={
   synced :{cls:'st-synced', icon:'ti-circle-check', label:'Синхронізовано'},
-  pending:{cls:'st-pending',icon:'ti-device-floppy',label:'Є незбережені зміни · збереження…'},
+  pending:{cls:'st-pending',icon:'ti-device-floppy',label:'Не збережено'},
   syncing:{cls:'st-syncing',icon:'ti-cloud-upload',label:'Збереження…', spin:true},
   offline:{cls:'st-offline',icon:'ti-cloud-off',   label:'Офлайн · зміни збережено локально'},
   error  :{cls:'st-error',  icon:'ti-alert-triangle',label:'Помилка синхронізації'}
@@ -1234,9 +1247,49 @@ window.addEventListener('offline',()=>{
 // Збереження на сервер відбувається ЛИШЕ за ручним натисканням
 // кнопки/чіпа синхронізації (syncToServer). saveST() робить тільки
 // миттєвий локальний бекап і позначає статус "є незбережені зміни".
+//
+// UNDO: перед фіксацією нової зміни штовхаємо в історію знімок стану,
+// який був ДО цієї зміни (lastSnapshot), потім оновлюємо lastSnapshot
+// на актуальний стан. Так undoStack[i] завжди містить стан "до дії".
+let undoStack=[];
+const UNDO_MAX=20;
+let lastSnapshot=null;
 function saveST(){
+  try{
+    const cur=JSON.stringify(ST);
+    if(lastSnapshot!==null&&lastSnapshot!==cur){
+      undoStack.push(lastSnapshot);
+      if(undoStack.length>UNDO_MAX)undoStack.shift();
+      updateUndoBtn();
+    }
+    lastSnapshot=cur;
+  }catch(e){console.warn('[Undo] snapshot error:',e.message);}
   backupSTLocally();
   setSyncStatus('pending');
+}
+function undoLastAction(){
+  if(!undoStack.length){toast('Немає дій для відміни',false);return;}
+  const prev=undoStack.pop();
+  try{
+    ST=JSON.parse(prev);
+    lastSnapshot=prev;
+  }catch(e){toast('Помилка відміни дії',false);return;}
+  ensureST();
+  refreshAll();
+  renderCalendar();
+  syncCategorySelects();
+  loadSettingsRates();
+  backupSTLocally();
+  setSyncStatus('pending');
+  updateUndoBtn();
+  toast('Дію відмінено');
+}
+function updateUndoBtn(){
+  const btn=document.getElementById('undoFab');
+  if(!btn)return;
+  btn.style.display=undoStack.length?'flex':'none';
+  const cnt=document.getElementById('undoFabCount');
+  if(cnt)cnt.textContent=undoStack.length;
 }
 
 /* ═══════════════════════════════════════════
@@ -1486,12 +1539,13 @@ function monthKey(d){return d.slice(0,7);}
 function fmt(n,cur='UAH'){
   const s=CUR_SYM[cur]||'';
   if(isNaN(n)||n===null)return s+'0';
+  const neg=n<0;
   const a=Math.abs(n);
   let v;
-  if(a>=1e6)v=(n/1e6).toFixed(2)+'М';
-  else if(a>=1000)v=Math.round(n).toLocaleString('uk-UA');
-  else v=Math.abs(n)<0.01?'0':n.toFixed(2).replace(/\.00$/,'');
-  return s+v;
+  if(a>=1e6)v=(a/1e6).toFixed(2)+'М';
+  else if(a>=1000)v=Math.round(a).toLocaleString('uk-UA');
+  else v=a<0.01?'0':a.toFixed(2).replace(/\.00$/,'');
+  return (neg&&v!=='0'?'-':'')+s+v;
 }
 function fmtSign(n,cur='UAH'){return (n>=0?'+':'')+fmt(n,cur);}
 function toast(msg,ok=true){
@@ -2535,7 +2589,7 @@ function renderEvTable(){
           <div style="width:6px;height:6px;border-radius:50%;background:${e.type==='income'?'var(--gr2)':'var(--or2)'};flex-shrink:0"></div>
           <span>${e.name}</span>
         </div>
-        <div class="ev-col-rep"><span class="badge ${e.repeat!=='once'?'badge-rep':e.type==='income'?'badge-in':'badge-out'}">${e.source==='event'&&e.repeat!=='once'?REP_LABELS[e.repeat]:'Раз'}</span></div>
+        <div class="ev-col-rep"><span class="badge ${e.repeat!=='once'?'badge-rep':e.type==='income'?'badge-in':'badge-out'}">${e.repeat&&e.repeat!=='once'?REP_LABELS[e.repeat]:'Раз'}</span></div>
         <div class="ev-col-amt ${e.type==='income'?'val-pos':'val-neg'}">${e.type==='income'?'+':'-'}${fmt(e.amount,e.currency||e.accCur||'UAH')}</div>
         <div class="ev-col-acc">${e.accName||''}</div>
       </div>
@@ -3305,6 +3359,7 @@ function refreshAll(){renderAccounts();renderAssets();}
 
     if(!fbUser){
       ensureST();
+      lastSnapshot=JSON.stringify(ST);
       // Показуємо екран входу
       await showAuthScreen().catch(()=>{});
       hideLoad();
@@ -3329,6 +3384,7 @@ function refreshAll(){renderAccounts();renderAssets();}
       updateUserIndicator();
       const now=new Date();
       calY=now.getFullYear();calM=now.getMonth();
+      lastSnapshot=JSON.stringify(ST);
       processRecurringEvents();
       refreshAll();
       syncCategorySelects();
