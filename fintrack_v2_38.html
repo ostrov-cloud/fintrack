@@ -724,7 +724,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.8</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.7</span>
     </div>
 
     <!-- Курси валют -->
@@ -1027,45 +1027,6 @@ tr:hover .del-row-btn{opacity:1;}
   </div>
 </div>
 
-<!-- MODAL: PIN SETUP -->
-<div class="modal-bg hidden" id="modalPINSetup" style="z-index:100000">
-  <div class="modal" style="max-width:360px">
-    <div class="modal-title">🔐 Встановіть PIN-код</div>
-    <p style="font-size:13px;color:var(--txt2);margin-bottom:16px;line-height:1.5">
-      PIN-код шифрує ваші дані. Без нього дані не можна розшифрувати.<br>
-      <strong style="color:var(--or4)">Якщо забудете PIN — дані буде втрачено безповоротно.</strong>
-    </p>
-    <div class="field">
-      <label>PIN-код (мін. 4 символи)</label>
-      <input type="password" id="pinSetup1" placeholder="••••" inputmode="numeric" autocomplete="new-password"/>
-    </div>
-    <div class="field">
-      <label>Підтвердіть PIN</label>
-      <input type="password" id="pinSetup2" placeholder="••••" inputmode="numeric" autocomplete="new-password"
-        onkeydown="if(event.key==='Enter')submitPINSetup()"/>
-    </div>
-    <div id="pinSetupError" style="color:var(--red);font-size:12px;min-height:16px;margin-bottom:8px"></div>
-    <button class="btn btn-primary" onclick="submitPINSetup()" style="width:100%">Встановити PIN та зашифрувати</button>
-  </div>
-</div>
-
-<!-- MODAL: PIN ENTRY -->
-<div class="modal-bg hidden" id="modalPINEntry" style="z-index:100000">
-  <div class="modal" style="max-width:320px;text-align:center">
-    <div style="font-size:28px;margin-bottom:8px">🔐</div>
-    <div class="modal-title" style="justify-content:center;border:none;padding-bottom:4px">Введіть PIN-код</div>
-    <p style="font-size:12px;color:var(--txt3);margin-bottom:16px">для розшифрування ваших даних</p>
-    <div class="field">
-      <input type="password" id="pinEntry" placeholder="••••" inputmode="numeric" autocomplete="current-password"
-        style="text-align:center;font-size:22px;letter-spacing:6px"
-        onkeydown="if(event.key==='Enter')submitPINEntry()"/>
-    </div>
-    <div id="pinEntryError" style="color:var(--red);font-size:12px;min-height:16px;margin-bottom:8px"></div>
-    <button class="btn btn-primary" onclick="submitPINEntry()" style="width:100%">Увійти</button>
-    <button class="btn btn-ghost" onclick="authLogout()" style="width:100%;margin-top:8px;font-size:12px">Вийти з акаунту</button>
-  </div>
-</div>
-
 <!-- MODAL: ASSET ACTION MENU -->
 <div class="modal-bg hidden" id="modalAssetMenu">
   <div class="modal" style="max-width:320px">
@@ -1356,42 +1317,72 @@ function updateUndoBtn(){
 const BACKUP_PREFIX='ft3_backup_';
 const BACKUP_MAX=10;
 
-// Локальний бекап тепер зашифрований через Users._saveLocalBackup (у syncToServer)
 function backupSTLocally(){
-  // no-op: бекап відбувається автоматично всередині Users.save()
+  try{
+    const key=BACKUP_PREFIX+Date.now();
+    localStorage.setItem(key,JSON.stringify(ST));
+    trimLocalBackups();
+  }catch(e){
+    // localStorage переповнений або недоступний — не критично, головний шлях збереження (Firestore) це не блокує
+    console.warn('[Backup] Не вдалося зробити локальний бекап:',e.message);
+  }
 }
 
 function listLocalBackups(){
-  return Users.getLocalBackups();
+  const keys=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith(BACKUP_PREFIX))keys.push(k);
+  }
+  return keys.sort().reverse(); // найновіші перші
 }
 
-function trimLocalBackups(){ /* керується Users */ }
+function trimLocalBackups(){
+  const keys=listLocalBackups();
+  if(keys.length>BACKUP_MAX){
+    keys.slice(BACKUP_MAX).forEach(k=>localStorage.removeItem(k));
+  }
+}
 
-async function restoreLocalBackup(index){
-  const result=await Users.restoreLocalBackup(index);
-  if(!result.ok){toast('Помилка відновлення: '+result.error,false);return;}
-  ST={...ST,...result.data};
-  ensureST();
-  saveST();refreshAll();syncCategorySelects();loadSettingsRates();
-  toast('✅ Дані відновлено з локального бекапу');
+function restoreLocalBackup(key){
+  try{
+    const raw=localStorage.getItem(key);
+    if(!raw){toast('Бекап не знайдено',false);return;}
+    const data=JSON.parse(raw);
+    ST=data;
+    ensureST();
+    saveST();
+    refreshAll();
+    syncCategorySelects();
+    loadSettingsRates();
+    toast('✅ Дані відновлено з локального бекапу');
+  }catch(e){
+    console.error('[Backup] Помилка відновлення:',e);
+    toast('Помилка відновлення бекапу',false);
+  }
 }
 
 function renderLocalBackupsList(){
   const el=document.getElementById('localBackupsList');
   if(!el)return;
-  const backups=Users.getLocalBackups();
-  if(!backups.length){
+  const keys=listLocalBackups();
+  if(!keys.length){
     el.innerHTML='<div style="color:var(--txt3);font-size:12px;text-align:center;padding:14px">Локальних бекапів ще немає</div>';
     return;
   }
-  el.innerHTML=backups.map(b=>`<div style="display:flex;align-items:center;justify-content:space-between;background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:8px 12px;font-size:12px">
-    <span style="color:var(--txt2)">${b.label}</span>
-    <button class="export-btn" style="padding:4px 10px;font-size:11px" onclick="confirmRestoreLocalBackup(${b.index})">↩️ Відновити</button>
-  </div>`).join('');
+  el.innerHTML=keys.map(k=>{
+    const ts=parseInt(k.replace(BACKUP_PREFIX,''),10);
+    const d=new Date(ts);
+    const label=isNaN(ts)?k:d.toLocaleString('uk-UA',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:8px 12px;font-size:12px">
+      <span style="color:var(--txt2)">${label}</span>
+      <button class="export-btn" style="padding:4px 10px;font-size:11px" onclick="confirmRestoreLocalBackup('${k}')">↩️ Відновити</button>
+    </div>`;
+  }).join('');
 }
 
-function confirmRestoreLocalBackup(index){
-  showConfirm('Відновити дані з цього бекапу? Поточні дані будуть замінені.',()=>restoreLocalBackup(index));
+function confirmRestoreLocalBackup(key){
+  showConfirm('Відновити дані з цього бекапу? Поточні дані будуть замінені.',()=>restoreLocalBackup(key));
 }
 
 async function syncToServer(){
@@ -1434,149 +1425,92 @@ function togglePwdVisibility(){
   if(inp.type==='password'){inp.type='text';icon.className='ti ti-eye-off';}
   else{inp.type='password';icon.className='ti ti-eye';}
 }
-
-// Загальний фінальний крок після авторизації: перевірка PIN
-async function _afterAuth(err){
-  const data = await Users.loadOrCreateData();
-  if(!data){
-    if(err)err.textContent='Помилка завантаження даних. Спробуйте ще раз';
-    return;
-  }
-  if(data._needsPINSetup){
-    showPINSetup(data._legacyData||null);
-    return;
-  }
-  if(data._needsPIN){
-    showPINEntry();
-    return;
-  }
-  ST={...ST,...data};
-  ensureST();
-  hideAuthScreen();
-  _showMainApp();
-}
-
 async function authLogin(){
   const email=document.getElementById('authUsername').value.trim();
   const password=document.getElementById('authPassword').value;
   const err=document.getElementById('authError');
+  
   if(!email||!email.includes('@')){err.textContent='Введіть коректний email (має містити @)';return;}
   if(!password||password.length<6){err.textContent='Пароль має бути не менше 6 символів';return;}
+  
   const result=await Users.login(email,password);
   if(!result.ok){err.textContent=result.error;return;}
-  await _afterAuth(err);
+  
+  const data = await Users.loadOrCreateData();
+  if(data){
+    ST={...ST,...data};
+    ensureST();
+    hideAuthScreen();
+  }else{
+    err.textContent='Помилка завантаження даних. Спробуйте ще раз';
+  }
 }
 
 async function authRegister(){
   const email=document.getElementById('authUsername').value.trim();
   const password=document.getElementById('authPassword').value;
   const err=document.getElementById('authError');
+  
   if(!email||!email.includes('@')){err.textContent='Email має містити символ @';return;}
   if(!password||password.length<6){err.textContent='Пароль має бути не менше 6 символів';return;}
+  
+  // Перевіряємо legacy дані для міграції
   const hasLegacy=Users.hasLegacyData();
+  
   const result=await Users.create(email,password);
   if(!result.ok){err.textContent=result.error;return;}
-  const legacyData=hasLegacy?Users.getLegacyData():null;
-  if(hasLegacy)Users.removeLegacyData();
+  
+  // Якщо були legacy дані — мігруємо їх
+  if(hasLegacy){
+    const legacy=Users.getLegacyData();
+    if(legacy&&legacy.accounts){
+      ST={...ST,...legacy};
+      ensureST();
+      await Users.save(ST);
+    }
+    Users.removeLegacyData();
+  }
+  
   hideAuthScreen();
-  showPINSetup(legacyData&&legacyData.accounts?legacyData:null);
 }
 
 async function authGoogleLogin(){
   const err=document.getElementById('authError');
   err.textContent='';
+  
   const hasLegacy=Users.hasLegacyData();
+  
   const result=await Users.loginGoogle();
   if(!result.ok){err.textContent=result.error;return;}
-  const legacyData=hasLegacy?Users.getLegacyData():null;
-  if(hasLegacy)Users.removeLegacyData();
-  const data=await Users.loadOrCreateData();
-  if(!data){err.textContent='Помилка завантаження даних. Спробуйте ще раз';return;}
-  if(data._needsPINSetup){hideAuthScreen();showPINSetup(legacyData&&legacyData.accounts?legacyData:null);return;}
-  if(data._needsPIN){hideAuthScreen();showPINEntry();return;}
-  ST={...ST,...data};ensureST();hideAuthScreen();_showMainApp();
+  
+  // Якщо були legacy дані — мігруємо їх
+  if(hasLegacy){
+    const legacy=Users.getLegacyData();
+    if(legacy&&legacy.accounts){
+      ST={...ST,...legacy};
+      ensureST();
+      await Users.save(ST);
+    }
+    Users.removeLegacyData();
+  }else{
+    const data = await Users.loadOrCreateData();
+    if(!data){
+      err.textContent='Помилка завантаження даних. Спробуйте ще раз';
+      return;
+    }
+    ST={...ST,...data};
+  }
+  
+  ensureST();
+  hideAuthScreen();
 }
 
 async function authLogout(){
   await Users.logout();
-  closeModal('modalPINEntry');
-  closeModal('modalPINSetup');
   document.getElementById('authUsername').value='';
   document.getElementById('authPassword').value='';
   document.getElementById('authError').textContent='';
   await showAuthScreen();
-}
-
-// ── PIN Setup ──
-let _pinSetupLegacyData=null;
-function showPINSetup(legacyData){
-  _pinSetupLegacyData=legacyData||null;
-  document.getElementById('pinSetup1').value='';
-  document.getElementById('pinSetup2').value='';
-  document.getElementById('pinSetupError').textContent='';
-  openModal('modalPINSetup');
-  setTimeout(()=>document.getElementById('pinSetup1').focus(),200);
-}
-
-async function submitPINSetup(){
-  const pin=document.getElementById('pinSetup1').value;
-  const pin2=document.getElementById('pinSetup2').value;
-  const err=document.getElementById('pinSetupError');
-  if(!pin||pin.length<4){err.textContent='PIN має бути не менше 4 символів';return;}
-  if(pin!==pin2){err.textContent='PIN-коди не співпадають';return;}
-  const btn=document.getElementById('pinSetupBtn')||document.querySelector('#modalPINSetup .btn-primary');
-  if(btn)btn.disabled=true;
-  err.textContent='';
-  const result=await Users.setupPIN(pin,_pinSetupLegacyData);
-  if(btn)btn.disabled=false;
-  if(!result.ok){err.textContent=result.error;return;}
-  closeModal('modalPINSetup');
-  const data=_pinSetupLegacyData||Users.emptyST();
-  ST={...ST,...data};ensureST();
-  _showMainApp();
-  toast('🔐 Дані зашифровано PIN-кодом');
-}
-
-// ── PIN Entry ──
-function showPINEntry(){
-  document.getElementById('pinEntry').value='';
-  document.getElementById('pinEntryError').textContent='';
-  openModal('modalPINEntry');
-  setTimeout(()=>document.getElementById('pinEntry').focus(),200);
-}
-
-async function submitPINEntry(){
-  const pin=document.getElementById('pinEntry').value;
-  const err=document.getElementById('pinEntryError');
-  if(!pin||pin.length<4){err.textContent='Введіть PIN';return;}
-  err.textContent='⏳ Перевірка...';
-  const btn=document.querySelector('#modalPINEntry .btn-primary');
-  if(btn)btn.disabled=true;
-  const result=await Users.unlockWithPIN(pin);
-  if(btn)btn.disabled=false;
-  if(!result.ok){err.textContent=result.error;return;}
-  closeModal('modalPINEntry');
-  ST={...ST,...result.data};ensureST();
-  _showMainApp();
-}
-
-// Фінальний показ застосунку після успішного auth+PIN
-function _showMainApp(){
-  // Ховаємо auth-екран і відновлюємо головний layout
-  const authScr=document.getElementById('authScreen');
-  if(authScr)authScr.style.display='none';
-  document.querySelector('.main')?.style.removeProperty('display');
-  document.querySelector('.navbar')?.style.removeProperty('display');
-  document.querySelector('.topbar')?.style.removeProperty('display');
-  const authErr=document.getElementById('authError');
-  if(authErr)authErr.textContent='';
-
-  const shell=document.querySelector('.shell');if(shell)shell.classList.add('visible');
-  setSyncStatus(navigator.onLine?'synced':'offline');
-  updateUserIndicator();
-  const now=new Date();calY=now.getFullYear();calM=now.getMonth();
-  lastSnapshot=JSON.stringify(ST);
-  processRecurringEvents();refreshAll();syncCategorySelects();loadSettingsRates();refreshCalendarRates();
 }
 
 async function showAuthScreen(){
@@ -3492,36 +3426,44 @@ function refreshAll(){renderAccounts();renderAssets();}
   const forceHideTimer=setTimeout(()=>{console.warn('[Init] Force hide loading screen after timeout');hideLoad();},15000);
   try{
     await Firebase.init().catch(()=>{});
-    const fbUser=await Firebase.waitForAuthInit();
+
+    const fbUser = await Firebase.waitForAuthInit();
 
     if(!fbUser){
       ensureST();
       lastSnapshot=JSON.stringify(ST);
+      // Показуємо екран входу
       await showAuthScreen().catch(()=>{});
       hideLoad();
-      return;
+    }else{
+      // Firebase Auth сам відновив сесію — завантажуємо дані
+      const data = await Users.loadOrCreateData();
+      if(data){
+        ST={...ST,...data};
+        ensureST();
+        console.log('[Init] Auto-login successful, data loaded from Firestore');
+      }else{
+        // null = помилка читання (мережа/таймінг), а НЕ "користувача нема"
+        console.error('[Init] Не вдалося завантажити дані. Спробуйте оновити сторінку.');
+        toast('Помилка завантаження даних. Перезавантажте сторінку', false);
+        hideLoad();
+        return;
+      }
+      // Показуємо основний інтерфейс
+      const shell=document.querySelector('.shell');
+      if(shell)shell.classList.add('visible');
+      setSyncStatus(navigator.onLine?'synced':'offline');
+      updateUserIndicator();
+      const now=new Date();
+      calY=now.getFullYear();calM=now.getMonth();
+      lastSnapshot=JSON.stringify(ST);
+      processRecurringEvents();
+      refreshAll();
+      syncCategorySelects();
+      loadSettingsRates();
+      refreshCalendarRates();
+      setTimeout(hideLoad,200);
     }
-
-    // Сесія відновлена — завантажуємо/перевіряємо стан шифрування
-    const data=await Users.loadOrCreateData();
-    hideLoad();
-
-    if(!data){
-      toast('Помилка завантаження даних. Перезавантажте сторінку',false);
-      return;
-    }
-    if(data._needsPINSetup){
-      showPINSetup(data._legacyData||null);
-      return;
-    }
-    if(data._needsPIN){
-      showPINEntry();
-      return;
-    }
-
-    ST={...ST,...data};
-    ensureST();
-    _showMainApp();
   }catch(e){console.warn('Init error:',e);hideLoad();}
   finally{clearTimeout(forceHideTimer);}
 })();
