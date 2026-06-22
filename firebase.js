@@ -30,26 +30,6 @@ const Firebase = (() => {
         firebase.initializeApp(config);
       }
       _db = firebase.firestore();
-
-      // Офлайн-кеш Firestore: дозволяє читати/писати без інтернету —
-      // зміни лежать в IndexedDB і автоматично відправляються на сервер,
-      // коли з'являється з'єднання. МАЄ викликатись до будь-яких інших
-      // звернень до Firestore (get/set), інакше Firestore проігнорує налаштування.
-      try {
-        await _db.enablePersistence({ synchronizeTabs: true });
-        _persistenceEnabled = true;
-        console.log('[Firebase] Офлайн-кеш увімкнено (synchronizeTabs)');
-      } catch (persErr) {
-        if (persErr.code === 'failed-precondition') {
-          // Офлайн-кеш уже зайнятий іншою вкладкою без synchronizeTabs,
-          // або браузер не підтримує спільний доступ — це не критично,
-          // застосунок працюватиме, просто без офлайн-кешу в цій вкладці.
-          console.warn('[Firebase] Офлайн-кеш недоступний: відкрито кілька вкладок');
-        } else if (persErr.code === 'unimplemented') {
-          console.warn('[Firebase] Офлайн-кеш не підтримується цим браузером');
-        } else {
-          console.warn('[Firebase] Не вдалося увімкнути офлайн-кеш:', persErr.message);
-        }
       }
 
       _auth = firebase.auth();
