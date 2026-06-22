@@ -1562,6 +1562,15 @@ async function submitPINEntry(){
 
 // Фінальний показ застосунку після успішного auth+PIN
 function _showMainApp(){
+  // Ховаємо auth-екран і відновлюємо головний layout
+  const authScr=document.getElementById('authScreen');
+  if(authScr)authScr.style.display='none';
+  document.querySelector('.main')?.style.removeProperty('display');
+  document.querySelector('.navbar')?.style.removeProperty('display');
+  document.querySelector('.topbar')?.style.removeProperty('display');
+  const authErr=document.getElementById('authError');
+  if(authErr)authErr.textContent='';
+
   const shell=document.querySelector('.shell');if(shell)shell.classList.add('visible');
   setSyncStatus(navigator.onLine?'synced':'offline');
   updateUserIndicator();
