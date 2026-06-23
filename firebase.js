@@ -30,7 +30,6 @@ const Firebase = (() => {
         firebase.initializeApp(config);
       }
       _db = firebase.firestore();
-      }
 
       _auth = firebase.auth();
 
