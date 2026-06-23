@@ -729,7 +729,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.2</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.3</span>
     </div>
 
     <!-- Курси валют -->
@@ -2294,7 +2294,7 @@ function getAssetTotalValue(item){
   }
   return val;
 }
-function renderAssets(){
+async function renderAssets(){
   const body=document.getElementById('assetBody');
   const assets=ST.assets.filter(a=>a.type==='asset');
   const liabs=ST.assets.filter(a=>a.type==='liability');
