@@ -732,7 +732,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.4</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.5</span>
     </div>
 
     <!-- Курси валют -->
@@ -2713,12 +2713,30 @@ function processRecurringEvents(){
       if(matches&&ds!==e.date){ // ds===e.date вже проведено одразу при створенні події
         const already=ST.transactions.some(t=>t.eventTplId===e.id&&t.date===ds);
         if(!already){
-          // Примітка: курс на дату майбутнього/минулого настання тут не запитується (синхронний прохід),
-          // тож сума береться як є в одиницях події; за потреби конвертації варіюйте валюту події = валюті рахунку.
-          const amt=e.amount;
-          acc.balance+=e.type==='income'?Math.abs(amt):-Math.abs(amt);
-          ST.transactions.push({id:uid(),accId:e.accId,amount:e.type==='income'?Math.abs(amt):-Math.abs(amt),
-            desc:e.name,cat:e.name,icon:'',date:ds,type:e.type,eventTplId:e.id});
+          const evCur=e.currency||acc.currency;
+          let amtInAccCur;
+          if(evCur===acc.currency){
+            amtInAccCur=Math.abs(e.amount);
+          }else{
+            // Шукаємо курс на дату ds або найближчу попередню
+            let rates=ST.exchangeRates[ds];
+            if(!rates){
+              const sorted=Object.keys(ST.exchangeRates).sort();
+              for(let i=sorted.length-1;i>=0;i--){
+                if(sorted[i]<=ds){rates=ST.exchangeRates[sorted[i]];break;}
+              }
+            }
+            amtInAccCur=rates?convertCurrency(Math.abs(e.amount),evCur,acc.currency,rates):null;
+          }
+          if(amtInAccCur===null){
+            toast('⚠️ Немає курсу валют для конвертації. Завантажте курс у Налаштуваннях.',false);
+            d.setDate(d.getDate()+1);continue;
+          }
+          const signedAmt=e.type==='income'?amtInAccCur:-amtInAccCur;
+          acc.balance+=signedAmt;
+          ST.transactions.push({id:uid(),accId:e.accId,amount:signedAmt,
+            desc:e.name,cat:e.name,icon:e.icon||'',date:ds,type:e.type,
+            eventTplId:e.id,origAmt:e.amount,origCur:evCur});
           changed=true;
         }
       }
