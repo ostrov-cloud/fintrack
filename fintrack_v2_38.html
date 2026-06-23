@@ -119,6 +119,9 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions .acc-act-add{background:var(--gr2);}
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
 .acc-row-actions .acc-act-del{background:var(--red);}
+.hero-toggle-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);background:var(--card2);color:var(--txt3);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0;}
+.hero-toggle-btn:hover{border-color:var(--pu6);color:var(--pu6);}
+.hero-toggle-btn.excluded{background:var(--pu6);border-color:var(--pu6);color:#fff;opacity:.7;}
 .ai-row-wrap{position:relative;overflow:hidden;border-radius:var(--r-sm);}
 .ai-row-actions{position:absolute;top:0;right:0;bottom:0;display:flex;}
 .ai-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
@@ -729,7 +732,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.3</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.4</span>
     </div>
 
     <!-- Курси валют -->
@@ -1954,7 +1957,10 @@ function saveAccount(){
 function renderAccounts(){
   const ul=document.getElementById('accList');
   if(!ST.accounts.length){ul.innerHTML='<div style="color:var(--txt3);font-size:13px;text-align:center;padding:20px">Рахунків ще немає</div>';return;}
-  ul.innerHTML=ST.accounts.map((a,i)=>`
+  const excluded=getHeroExcluded();
+  ul.innerHTML=ST.accounts.map((a,i)=>{
+    const isExcluded=excluded.has(a.id);
+    return `
     <div class="acc-row-wrap">
       <div class="acc-row-actions">
         <button class="acc-act-add" data-idx="${i}" title="Додати операцію"><i class="ti ti-plus"></i></button>
@@ -1964,26 +1970,41 @@ function renderAccounts(){
       <div class="acc-row${ST.selAcc===i?' active':''}" onclick="selectAcc(${i})">
         <div class="acc-ico" style="background:${a.color}22;color:${a.color}">${renderIcon(a.icon||a.emoji)}</div>
         <div class="acc-info"><div class="acc-name">${stripIconPrefix(a.name)}</div><div class="acc-cur">${a.currency}</div></div>
-        <div><div class="acc-bal">${fmt(a.balance,a.currency)}</div><div class="acc-bal-cur">${a.currency}</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="hero-toggle-btn${isExcluded?' excluded':''}" onclick="toggleHeroExclude(event,'${a.id}')" title="${isExcluded?'Включити в загальний баланс':'Виключити з загального балансу'}">
+            <i class="ti ${isExcluded?'ti-eye-off':'ti-eye'}"></i>
+          </button>
+          <div><div class="acc-bal">${fmt(a.balance,a.currency)}</div><div class="acc-bal-cur">${a.currency}</div></div>
+        </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   initAccSwipe();
+
   // hero totals
   const td=today();
   const rates=ST.exchangeRates[td]||{UAH:1,USD:41,EUR:44};
-  const uah=ST.accounts.filter(a=>a.currency==='UAH').reduce((s,a)=>s+a.balance,0);
-  const usd=ST.accounts.filter(a=>a.currency==='USD').reduce((s,a)=>s+a.balance,0);
-  const eur=ST.accounts.filter(a=>a.currency==='EUR').reduce((s,a)=>s+a.balance,0);
-  const totalUAH=uah+(usd*(rates.USD||41))+(eur*(rates.EUR||44));
-  document.getElementById('heroAmount').textContent=fmt(totalUAH,'UAH');
-  document.getElementById('heroSub').textContent=ST.accounts.length+' рахунк'+(ST.accounts.length===1?'ок':ST.accounts.length<5?'и':'ів');
+  const linkedAccIds=new Set(ST.assets.map(a=>a.linkedAccId).filter(Boolean));
 
-  // per-currency breakdown (right side)
+  // Великий баланс — всі рахунки крім виключених вручну
+  const heroAccs=ST.accounts.filter(a=>!excluded.has(a.id));
+  const heroUAH=heroAccs.filter(a=>a.currency==='UAH').reduce((s,a)=>s+a.balance,0);
+  const heroUSD=heroAccs.filter(a=>a.currency==='USD').reduce((s,a)=>s+a.balance,0);
+  const heroEUR=heroAccs.filter(a=>a.currency==='EUR').reduce((s,a)=>s+a.balance,0);
+  const totalUAH=heroUAH+(heroUSD*(rates.USD||41))+(heroEUR*(rates.EUR||44));
+  document.getElementById('heroAmount').textContent=fmt(totalUAH,'UAH');
+  document.getElementById('heroSub').textContent=ST.accounts.length+' рахунк'+(ST.accounts.length===1?'ок':ST.accounts.length<5?'и':'ів')+(excluded.size?` · ${excluded.size} виключено`:'');
+
+  // Правий стовпець — тільки рахунки без прив'язаних активів
   const breakdown=document.getElementById('heroCurBreakdown');
+  const sideAccs=ST.accounts.filter(a=>!linkedAccIds.has(a.id));
+  const sUAH=sideAccs.filter(a=>a.currency==='UAH').reduce((s,a)=>s+a.balance,0);
+  const sUSD=sideAccs.filter(a=>a.currency==='USD').reduce((s,a)=>s+a.balance,0);
+  const sEUR=sideAccs.filter(a=>a.currency==='EUR').reduce((s,a)=>s+a.balance,0);
   const curChips=[];
-  if(uah!==0||(!usd&&!eur))curChips.push({cur:'UAH',amt:uah,ico:'<i class="ti ti-currency-hryvnia"></i>',cls:'cur-uah'});
-  if(usd!==0)curChips.push({cur:'USD',amt:usd,ico:'<i class="ti ti-currency-dollar"></i>',cls:'cur-usd'});
-  if(eur!==0)curChips.push({cur:'EUR',amt:eur,ico:'<i class="ti ti-currency-euro"></i>',cls:'cur-eur'});
+  if(sUAH!==0||(!sUSD&&!sEUR))curChips.push({cur:'UAH',amt:sUAH});
+  if(sUSD!==0)curChips.push({cur:'USD',amt:sUSD});
+  if(sEUR!==0)curChips.push({cur:'EUR',amt:sEUR});
   breakdown.innerHTML=curChips.map(c=>`
     <div style="display:flex;align-items:center">
       <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.9)">${fmt(c.amt,c.cur)}</span>
@@ -2025,6 +2046,20 @@ function syncAccSelects(){
   syncCategorySelects();
 }
 
+function getHeroExcluded(){
+  try{return new Set(JSON.parse(localStorage.getItem('ft3_hero_excluded')||'[]'));}
+  catch(e){return new Set();}
+}
+function setHeroExcluded(set){
+  localStorage.setItem('ft3_hero_excluded',JSON.stringify([...set]));
+}
+function toggleHeroExclude(e,accId){
+  e.stopPropagation();
+  const excl=getHeroExcluded();
+  if(excl.has(accId))excl.delete(accId);else excl.add(accId);
+  setHeroExcluded(excl);
+  renderAccounts();
+}
 function syncCategorySelects(){
   // категорії операцій прибрано — функція лишена як no-op,
   // щоб не чіпати всі виклики по коду
@@ -2307,6 +2342,8 @@ async function renderAssets(){
   const nextBtn=document.getElementById('assetMonthNext');
   if(nextBtn)nextBtn.disabled=isCurrentMonth;
 
+  processRecurringEvents();
+
   let html='';
   if(!ST.assets.length){
     body.innerHTML=`<tr><td colspan="3" style="text-align:center;padding:28px;color:var(--txt3);font-size:13px">Ще нічого немає</td></tr>`;
@@ -2356,6 +2393,7 @@ async function renderAssets(){
 }
 
 async function updateAssetSummary(){
+  processRecurringEvents();
   const mkSel=`${assetMonth.year}-${String(assetMonth.month+1).padStart(2,'0')}`;
   const rates=await fetchNBURates(today());
   let totalVal=0, totalInc=0, totalExp=0;
@@ -2437,8 +2475,14 @@ function assetInfoMonthMove(dir,assetId,accId){
 }
 
 function renderAssetInfoContent(asset,acc){
+  processRecurringEvents();
   const mkSel=`${assetInfoMonth.year}-${String(assetInfoMonth.month+1).padStart(2,'0')}`;
-  const txns=ST.transactions.filter(t=>t.accId===acc.id&&monthKey(t.date)===mkSel);
+  const txns=ST.transactions.filter(t=>
+    t.accId===acc.id &&
+    monthKey(t.date)===mkSel &&
+    t.cat!=='💰 Старт' &&
+    t.cat!=='⚙️ Система'
+  );
   const totalInc=txns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
   const totalExp=txns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
 
@@ -2467,7 +2511,9 @@ function renderAssetInfoContent(asset,acc){
       <div style="width:78px;text-align:center">Дохід</div>
     </div>`;
     txns.slice().reverse().forEach(t=>{
-      const pos=t.amount>0;
+      const isStart=t.cat==='💰 Старт'||t.cat==='⚙️ Система';
+      const pos=isStart?false:t.amount>0;
+      const dispAmt=isStart?t.amount:t.amount;
       html+=`<div class="ai-row-wrap">
         <div class="ai-row-actions">
           <button class="ai-act-add" data-acc="${acc.id}" data-asset="${asset.id}" title="Додати"><i class="ti ti-plus"></i></button>
@@ -2477,8 +2523,8 @@ function renderAssetInfoContent(asset,acc){
         <div class="ai-row-content txn-row">
           <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(t.icon||'ti-receipt')}</div>
           <div class="txn-info"><div class="txn-desc">${t.desc||t.cat}</div><div class="txn-meta">${t.cat||''} · ${t.date}</div></div>
-          <div class="txn-amt neg" style="width:78px;text-align:center">${!pos?fmt(Math.abs(t.amount),acc.currency):'—'}</div>
-          <div class="txn-amt pos" style="width:78px;text-align:center">${pos?'+'+fmt(t.amount,acc.currency):'—'}</div>
+          <div class="txn-amt neg" style="width:78px;text-align:center">${!pos?fmt(Math.abs(dispAmt),acc.currency):'—'}</div>
+          <div class="txn-amt pos" style="width:78px;text-align:center">${pos?'+'+fmt(dispAmt,acc.currency):'—'}</div>
         </div>
       </div>`;
     });
