@@ -512,7 +512,7 @@ tr:hover .del-row-btn{opacity:1;}
           <div class="hero-amount" id="heroAmount">₴0</div>
           <div class="hero-sub" id="heroSub">0 рахунків</div>
         </div>
-        <div id="heroCurBreakdown" style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-top:4px"></div>
+        <div id="heroCurBreakdown" style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;margin-top:6px"></div>
       </div>
       <div class="hero-stats">
         <div>
@@ -525,7 +525,7 @@ tr:hover .del-row-btn{opacity:1;}
         </div>
         <div>
           <div class="hs-val" id="heroNet">₴0</div>
-          <div class="hs-lbl">Чистий результат</div>
+          <div class="hs-lbl">Грошовий потік (міс)</div>
         </div>
       </div>
     </div>
@@ -1985,8 +1985,7 @@ function renderAccounts(){
   if(usd!==0)curChips.push({cur:'USD',amt:usd,ico:'<i class="ti ti-currency-dollar"></i>',cls:'cur-usd'});
   if(eur!==0)curChips.push({cur:'EUR',amt:eur,ico:'<i class="ti ti-currency-euro"></i>',cls:'cur-eur'});
   breakdown.innerHTML=curChips.map(c=>`
-    <div style="display:flex;align-items:center;gap:5px">
-      <span class="cur-ico ${c.cls}" style="width:18px;height:18px;font-size:10px;flex-shrink:0">${c.ico}</span>
+    <div style="display:flex;align-items:center">
       <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.9)">${fmt(c.amt,c.cur)}</span>
     </div>`).join('');
 
