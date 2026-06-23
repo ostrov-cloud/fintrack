@@ -507,8 +507,13 @@ tr:hover .del-row-btn{opacity:1;}
   <div class="screen active" id="screen-accounts">
     <div class="hero">
       <div class="hero-lbl">Загальний баланс</div>
-      <div class="hero-amount" id="heroAmount">₴0</div>
-      <div class="hero-sub" id="heroSub">Додайте перший рахунок</div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px">
+        <div>
+          <div class="hero-amount" id="heroAmount">₴0</div>
+          <div class="hero-sub" id="heroSub">0 рахунків</div>
+        </div>
+        <div id="heroCurBreakdown" style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-top:4px"></div>
+      </div>
       <div class="hero-stats">
         <div>
           <div class="hs-val" id="heroInc" style="color:#4ef0b8">+₴0</div>
@@ -724,7 +729,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.0</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.1</span>
     </div>
 
     <!-- Курси валют -->
@@ -889,8 +894,16 @@ tr:hover .del-row-btn{opacity:1;}
     <hr class="section-sep"/>
     <div class="sec-lbl">З якого рахунку витрачено кошти</div>
     <div class="frow">
-      <div class="field"><label>Рахунок</label><select id="mAsFromAcc"><option value="">— не списувати —</option></select></div>
-      <div class="field"><label>Сума списання</label><input type="number" id="mAsFromAmt" placeholder="0"/></div>
+      <div class="field"><label>Рахунок</label><select id="mAsFromAcc" onchange="updateAssetDeductInfo()"><option value="">— не списувати —</option></select></div>
+      <div class="field"><label>Сума списання</label><input type="number" id="mAsFromAmt" placeholder="0" oninput="updateAssetDeductInfo()"/></div>
+    </div>
+    <div class="frow">
+      <div class="field"><label>Валюта списання</label>
+        <select id="mAsFromCur" onchange="updateAssetDeductInfo()">
+          <option value="UAH">₴ UAH</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option>
+        </select>
+      </div>
+      <div class="field" id="mAsDeductInfo" style="display:flex;align-items:flex-end;padding-bottom:6px;font-size:11px;color:var(--txt3)"></div>
     </div>
     <label class="check-field">
       <input type="checkbox" id="mAsCreateAcc" checked/>
@@ -1873,9 +1886,10 @@ function editAccount(id){
 }
 
 function deleteAccount(id){
-  showConfirm('Видалити цей рахунок? Всі транзакції також будуть видалені.',()=>{
+  showConfirm('Видалити цей рахунок? Всі транзакції та події також будуть видалені.',()=>{
     ST.accounts=ST.accounts.filter(a=>a.id!==id);
     ST.transactions=ST.transactions.filter(t=>t.accId!==id);
+    ST.events=ST.events.filter(e=>e.accId!==id);
     ST.assets.forEach(a=>{if(a.linkedAccId===id)a.linkedAccId='';});
     if(ST.selAcc!==null){
       const idx=ST.accounts.findIndex(a=>a.id===id);
@@ -1954,21 +1968,30 @@ function renderAccounts(){
       </div>
     </div>`).join('');
   initAccSwipe();
-  // hero
+  // hero totals
+  const td=today();
+  const rates=ST.exchangeRates[td]||{UAH:1,USD:41,EUR:44};
   const uah=ST.accounts.filter(a=>a.currency==='UAH').reduce((s,a)=>s+a.balance,0);
   const usd=ST.accounts.filter(a=>a.currency==='USD').reduce((s,a)=>s+a.balance,0);
   const eur=ST.accounts.filter(a=>a.currency==='EUR').reduce((s,a)=>s+a.balance,0);
-  const parts=[];
-  if(uah||(!usd&&!eur))parts.push(fmt(uah,'UAH'));
-  if(usd)parts.push(fmt(usd,'USD'));
-  if(eur)parts.push(fmt(eur,'EUR'));
-  document.getElementById('heroAmount').textContent=parts[0]||'₴0';
-  document.getElementById('heroSub').textContent=parts.slice(1).join(' · ')||(ST.accounts.length+' рахунк'+(ST.accounts.length===1?'ок':ST.accounts.length<5?'и':'ів'));
-  // monthly stats
+  const totalUAH=uah+(usd*(rates.USD||41))+(eur*(rates.EUR||44));
+  document.getElementById('heroAmount').textContent=fmt(totalUAH,'UAH');
+  document.getElementById('heroSub').textContent=ST.accounts.length+' рахунк'+(ST.accounts.length===1?'ок':ST.accounts.length<5?'и':'ів');
+
+  // per-currency breakdown (right side)
+  const breakdown=document.getElementById('heroCurBreakdown');
+  const curChips=[];
+  if(uah!==0||(!usd&&!eur))curChips.push({cur:'UAH',amt:uah,ico:'<i class="ti ti-currency-hryvnia"></i>',cls:'cur-uah'});
+  if(usd!==0)curChips.push({cur:'USD',amt:usd,ico:'<i class="ti ti-currency-dollar"></i>',cls:'cur-usd'});
+  if(eur!==0)curChips.push({cur:'EUR',amt:eur,ico:'<i class="ti ti-currency-euro"></i>',cls:'cur-eur'});
+  breakdown.innerHTML=curChips.map(c=>`
+    <div style="display:flex;align-items:center;gap:5px">
+      <span class="cur-ico ${c.cls}" style="width:18px;height:18px;font-size:10px;flex-shrink:0">${c.ico}</span>
+      <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.9)">${fmt(c.amt,c.cur)}</span>
+    </div>`).join('');
+
   const mk=monthKey(today());
   const mtxns=ST.transactions.filter(t=>monthKey(t.date)===mk);
-  const td=today();
-  const rates=ST.exchangeRates[td]||{UAH:1,USD:41,EUR:44};
   let inc=0, exp=0;
   mtxns.forEach(t=>{
     const acc=ST.accounts.find(a=>a.id===t.accId);
@@ -2164,6 +2187,8 @@ function openAddAsset(){
   ['mAsName','mAsVal','mAsFromAmt'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('mAsCreateAcc').checked=true;
   document.getElementById('mAsCur').value='UAH';
+  document.getElementById('mAsFromCur').value='UAH';
+  document.getElementById('mAsDeductInfo').textContent='';
   buildIconPicker('mAsEmoji','ti-home');
   syncAccSelects();
   openModal('modalAsset');
@@ -2184,6 +2209,8 @@ function editAsset(id){
   document.getElementById('mAsCur').value=asset.currency;
   document.getElementById('mAsCreateAcc').checked=false;
   document.getElementById('mAsFromAmt').value='';
+  document.getElementById('mAsFromCur').value='UAH';
+  document.getElementById('mAsDeductInfo').textContent='';
   buildIconPicker('mAsEmoji',selIcon);
   syncAccSelects();
   if(asset.linkedAccId)document.getElementById('mAsFromAcc').value=asset.linkedAccId;
@@ -2194,54 +2221,60 @@ function setAssetType(t){
   document.getElementById('togAsset').className='tog'+(t==='asset'?' on-asset':'');
   document.getElementById('togLiab').className='tog'+(t==='liability'?' on-liability':'');
 }
-function saveAsset(){
+async function updateAssetDeductInfo(){
+  const accId=document.getElementById('mAsFromAcc').value;
+  const amt=parseFloat(document.getElementById('mAsFromAmt').value)||0;
+  const fromCur=document.getElementById('mAsFromCur').value;
+  const info=document.getElementById('mAsDeductInfo');
+  if(!info)return;
+  if(!accId||!amt){info.textContent='';return;}
+  const acc=ST.accounts.find(a=>a.id===accId);
+  if(!acc){info.textContent='';return;}
+  if(fromCur===acc.currency){info.textContent='';return;}
+  const rates=await fetchNBURates(today());
+  const converted=convertCurrency(amt,fromCur,acc.currency,rates);
+  info.textContent=`≈ ${fmt(converted,acc.currency)} з рахунку`;
+}
+
+async function saveAsset(){
   const name=document.getElementById('mAsName').value.trim();
   if(!name){toast('Введіть назву',false);return;}
   const val=parseFloat(document.getElementById('mAsVal').value)||0;
   const cur=document.getElementById('mAsCur').value;
   const fromAccId=document.getElementById('mAsFromAcc').value;
   const fromAmt=parseFloat(document.getElementById('mAsFromAmt').value)||0;
+  const fromCur=document.getElementById('mAsFromCur').value;
   const createAcc=document.getElementById('mAsCreateAcc').checked;
   const icon=selIcon||'ti-home';
   const cat=document.getElementById('mAsCat').value;
   const editId=document.getElementById('mAsEditId').value;
 
   if(editId){
-    // Редагування існуючого активу
     const asset=ST.assets.find(a=>a.id===editId);
     if(asset){
-      asset.name=name;
-      asset.icon=icon;
-      asset.emoji=icon; // compat
-      asset.cat=cat;
-      asset.value=val;
-      asset.currency=cur;
-      asset.type=selAssetType;
-      // Оновлюємо пов'язаний рахунок якщо він є
+      asset.name=name;asset.icon=icon;asset.emoji=icon;
+      asset.cat=cat;asset.value=val;asset.currency=cur;asset.type=selAssetType;
       if(asset.linkedAccId){
         const linkedAcc=ST.accounts.find(a=>a.id===asset.linkedAccId);
-        if(linkedAcc){
-          linkedAcc.name=name;
-          linkedAcc.emoji=icon;
-          linkedAcc.currency=cur;
-        }
+        if(linkedAcc){linkedAcc.name=name;linkedAcc.emoji=icon;linkedAcc.currency=cur;}
       }
       toast('Актив оновлено!');
     }
   }else{
-    // Створення нового активу
     let linkedAccId='';
     if(createAcc){
       const newAcc={id:uid(),name:name,emoji:icon,currency:cur,balance:val,color:COLORS[ST.assets.length%COLORS.length]};
       ST.accounts.push(newAcc);
       linkedAccId=newAcc.id;
-      if(val!==0)ST.transactions.push({id:uid(),accId:newAcc.id,amount:val,desc:'Початкова вартість активу',cat:'💰 Старт',icon:icon,date:today(),type:'income'});
+      if(val!==0)ST.transactions.push({id:uid(),accId:newAcc.id,amount:val,desc:'Початкова вартість активу',cat:'💰 Старт',icon,date:today(),type:'income'});
     }
     if(fromAccId&&fromAmt>0){
       const fromAcc=ST.accounts.find(a=>a.id===fromAccId);
       if(fromAcc){
-        fromAcc.balance-=fromAmt;
-        ST.transactions.push({id:uid(),accId:fromAccId,amount:-fromAmt,desc:'Придбання: '+name,cat:'💼 Актив',icon,date:today(),type:'expense'});
+        const rates=await fetchNBURates(today());
+        const amtInAccCur=convertCurrency(fromAmt,fromCur,fromAcc.currency,rates);
+        fromAcc.balance-=amtInAccCur;
+        ST.transactions.push({id:uid(),accId:fromAccId,amount:-amtInAccCur,desc:'Придбання: '+name,cat:'💼 Актив',icon,date:today(),type:'expense',origAmt:fromAmt,origCur:fromCur});
       }
     }
     ST.assets.push({id:uid(),type:selAssetType,icon,emoji:icon,name,cat,value:val,currency:cur,linkedAccId});
@@ -2280,20 +2313,25 @@ function renderAssets(){
     body.innerHTML=`<tr><td colspan="3" style="text-align:center;padding:28px;color:var(--txt3);font-size:13px">Ще нічого немає</td></tr>`;
     updateAssetSummary(); return;
   }
-  const getMonthTxns=(item)=>{
+  const getMonthTxns=async(item)=>{
     const lnk=item.linkedAccId?ST.accounts.find(a=>a.id===item.linkedAccId):null;
-    if(!lnk)return{inc:0,exp:0};
-    const txns=ST.transactions.filter(t=>t.accId===lnk.id&&monthKey(t.date)===mkSel);
-    const inc=txns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-    const exp=txns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+    if(!lnk)return{inc:0,exp:0,lnk:null};
+    const txns=ST.transactions.filter(t=>
+      t.accId===lnk.id&&monthKey(t.date)===mkSel&&
+      t.cat!=='💰 Старт'&&t.cat!=='⚙️ Система'
+    );
+    const rates=await fetchNBURates(today());
+    const toAssetCur=(amt,fromCur)=>convertCurrency(Math.abs(amt),fromCur,item.currency,rates);
+    const inc=txns.filter(t=>t.amount>0).reduce((s,t)=>s+toAssetCur(t.amount,lnk.currency),0);
+    const exp=txns.filter(t=>t.amount<0).reduce((s,t)=>s+toAssetCur(t.amount,lnk.currency),0);
     return{inc,exp,lnk};
   };
-  const renderRows=(arr,grpLabel)=>{
+  const renderRows=async(arr)=>{
     if(!arr.length)return '';
     let r='';
-    arr.forEach(item=>{
+    for(const item of arr){
       const isA=item.type==='asset';
-      const{inc,exp,lnk}=getMonthTxns(item);
+      const{inc,exp,lnk}=await getMonthTxns(item);
       const totalVal=getAssetTotalValue(item);
       r+=`<tr onclick="openAssetMenu('${item.id}')" style="cursor:pointer">
         <td><div class="name-cell">
@@ -2308,11 +2346,11 @@ function renderAssets(){
         <td class="r ${(inc-exp)>0?'val-pos':(inc-exp)<0?'val-neg':'val-neu'}">${(inc-exp)!==0?fmtSign(inc-exp,item.currency):'—'}</td>
         <td class="r ${totalVal!==0?isA?'val-pos':'val-neg':'val-neu'}">${totalVal!==0?fmt(totalVal,item.currency):'—'}</td>
       </tr>`;
-    });
+    }
     return r;
   };
-  html+=renderRows(assets,'Активи');
-  html+=renderRows(liabs,'Пасиви');
+  html+=await renderRows(assets);
+  html+=await renderRows(liabs);
   body.innerHTML=html;
 
   updateAssetSummary();
@@ -2734,10 +2772,17 @@ function renderEvTable(){
     </div>`).join('');
   initEvSwipe();
 }
+function _refreshDayModalIfOpen(){
+  if(document.getElementById('modalDayEvents').classList.contains('hidden'))return;
+  if(dayEvDate)showDayEvents(dayEvDate);
+}
+
 function deleteEvent(id){
   showConfirm('Видалити цю подію?',()=>{
     ST.events=ST.events.filter(e=>e.id!==id);
-    saveST();renderCalendar();toast('Подію видалено');
+    saveST();refreshAll();renderCalendar();
+    _refreshDayModalIfOpen();
+    toast('Подію видалено');
   });
 }
 function deleteTxnGlobal(id){
@@ -2745,7 +2790,9 @@ function deleteTxnGlobal(id){
     const t=ST.transactions.find(x=>x.id===id);
     if(t){const acc=ST.accounts.find(a=>a.id===t.accId);if(acc)acc.balance-=t.amount;}
     ST.transactions=ST.transactions.filter(x=>x.id!==id);
-    saveST();refreshAll();renderCalendar();toast('Операцію видалено');
+    saveST();refreshAll();renderCalendar();
+    _refreshDayModalIfOpen();
+    toast('Операцію видалено');
   });
 }
 
