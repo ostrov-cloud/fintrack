@@ -724,7 +724,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.5.9</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.0</span>
     </div>
 
     <!-- Курси валют -->
@@ -771,6 +771,12 @@ tr:hover .del-row-btn{opacity:1;}
         <div class="field"><label>Новий пароль</label><input type="password" id="authNewPwd" placeholder="Мінімум 6 символів" maxlength="64"/></div>
         <div class="field"><label>Підтвердження</label><input type="password" id="authNewPwdConfirm" placeholder="Повторіть пароль"/></div>
         <button class="btn btn-primary" onclick="authChangePassword()" style="margin-top:6px">Зберегти пароль</button>
+      </div>
+      <hr class="section-sep" style="margin:14px 0"/>
+      <div style="background:rgba(216,90,48,.07);border:1px solid rgba(216,90,48,.25);border-radius:var(--r-sm);padding:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:6px">⚠️ Небезпечна зона</div>
+        <p style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.5">Видалення акаунту незворотне. Всі дані буде повністю видалено з сервера та неможливо відновити.</p>
+        <button class="export-btn" onclick="confirmDeleteUserAccount()" style="color:var(--red);border-color:rgba(216,90,48,.4);width:100%;justify-content:center">🗑️ Видалити акаунт назавжди</button>
       </div>
     </div>
 
@@ -1100,7 +1106,12 @@ tr:hover .del-row-btn{opacity:1;}
       <div class="tog on-in" id="togEtIn" onclick="setEtType('income')">↙ Надходження</div>
       <div class="tog" id="togEtOut" onclick="setEtType('expense')">↗ Витрата</div>
     </div>
-    <div class="field"><label>Назва</label><input id="etDesc" placeholder="опис"/></div>
+    <div class="field"><label>Опис</label>
+      <div style="position:relative">
+        <textarea id="etDesc" placeholder="опис" rows="8" style="resize:vertical;min-height:160px;padding-right:40px"></textarea>
+        <button type="button" onclick="insertCheckmark('etDesc')" title="Вставити галочку" aria-label="Вставити галочку" style="position:absolute;left:50%;bottom:34px;transform:translateX(-50%);width:30px;height:30px;border-radius:50%;background:var(--pu6);border:none;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.45;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.45'">✓</button>
+      </div>
+    </div>
     <div class="frow">
       <div class="field"><label>Сума</label><input type="number" id="etAmt" placeholder="0"/></div>
       <div class="field"><label>Валюта</label>
@@ -3550,6 +3561,18 @@ function refreshAll(){renderAccounts();renderAssets();}
   finally{clearTimeout(forceHideTimer);}
 })();
 function showChangePwdDialog(){const b=document.getElementById('changePwdBlock');b.style.display=b.style.display==='none'?'block':'none';}
+
+function confirmDeleteUserAccount(){
+  showConfirm('⚠️ Видалити акаунт назавжди? Всі дані буде знищено без можливості відновлення.',async()=>{
+    const result=await Users.deleteAccount();
+    if(result.ok){
+      toast('Акаунт видалено');
+      await showAuthScreen();
+    }else{
+      toast('Помилка видалення: '+result.error,false);
+    }
+  });
+}
 async function authChangePassword(){
   const np=document.getElementById('authNewPwd').value;
   const cp=document.getElementById('authNewPwdConfirm').value;
