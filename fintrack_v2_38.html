@@ -493,7 +493,10 @@ tr:hover .del-row-btn{opacity:1;}
 
 <div class="main">
   <div class="topbar">
-    <div class="topbar-title" id="topbarTitle">Рахунки</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="topbar-title" id="topbarTitle">Рахунки</div>
+      <button onclick="showPageHelp()" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--txt3);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s" onmouseover="this.style.borderColor='var(--pu6)';this.style.color='var(--pu6)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--txt3)'">?</button>
+    </div>
     <div class="topbar-right">
       <div class="sync-chip st-synced" id="syncChip" onclick="syncToServer()" title="Натисніть, щоб синхронізувати вручну">
         <span class="sync-chip-ico" id="syncChipIco"><i class="ti ti-circle-check"></i></span>
@@ -732,7 +735,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.5</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.6</span>
     </div>
 
     <!-- Курси валют -->
@@ -784,6 +787,7 @@ tr:hover .del-row-btn{opacity:1;}
       <div style="background:rgba(216,90,48,.07);border:1px solid rgba(216,90,48,.25);border-radius:var(--r-sm);padding:12px">
         <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:6px">⚠️ Небезпечна зона</div>
         <p style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.5">Видалення акаунту незворотне. Всі дані буде повністю видалено з сервера та неможливо відновити.</p>
+        <button class="export-btn" onclick="confirmClearCache()" style="width:100%;justify-content:center;margin-bottom:8px">🗑️ Очистити кеш браузера</button>
         <button class="export-btn" onclick="confirmDeleteUserAccount()" style="color:var(--red);border-color:rgba(216,90,48,.4);width:100%;justify-content:center">🗑️ Видалити акаунт назавжди</button>
       </div>
     </div>
@@ -1085,6 +1089,14 @@ tr:hover .del-row-btn{opacity:1;}
     <div id="pinEntryError" style="color:var(--red);font-size:12px;min-height:16px;margin-bottom:8px"></div>
     <button class="btn btn-primary" onclick="submitPINEntry()" style="width:100%">Увійти</button>
     <button class="btn btn-ghost" onclick="authLogout()" style="width:100%;margin-top:8px;font-size:12px">Вийти з акаунту</button>
+  </div>
+</div>
+
+<!-- MODAL: PAGE HELP -->
+<div class="modal-bg hidden" id="modalPageHelp" style="z-index:500">
+  <div class="modal" style="max-width:420px;max-height:80vh;overflow-y:auto">
+    <div class="modal-title"><span id="helpModalTitle">Довідка</span> <div class="close-x" onclick="closeModal('modalPageHelp')">✕</div></div>
+    <div id="helpModalBody" style="font-size:13px;line-height:1.7;color:var(--txt2)"></div>
   </div>
 </div>
 
@@ -1845,7 +1857,9 @@ async function updateTransferPreview(){
    NAVIGATION
 ═══════════════════════════════════════════ */
 const TITLES={accounts:'Рахунки',assets:'Активи / Пасиви',calendar:'Календар',reports:'Звіти',settings:'Налаштування'};
+let _currentScreen='accounts';
 function showScreen(name,btn){
+  _currentScreen=name;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
@@ -1855,6 +1869,68 @@ function showScreen(name,btn){
   if(name==='reports')setTimeout(()=>{renderReport1();renderReport2();},30);
   if(name==='calendar')renderCalendar();
   if(name==='settings'){loadSettingsRates();renderLocalBackupsList();}
+}
+
+const PAGE_HELP={
+  accounts:`<b>Рахунки</b> — основна сторінка застосунку.
+<br><br>
+🏦 <b>Загальний баланс</b> — сума всіх рахунків у гривні по поточному курсу. Кнопка 👁 на кожному рахунку дозволяє виключити його з підрахунку великого балансу.
+<br><br>
+💳 <b>Рахунки справа</b> — суми тільки по рахунках що не мають прив'язаних активів, згруповані по валютах.
+<br><br>
+➕ <b>Додати операцію</b> — натисни на рахунок або кнопку + внизу. В модалці вкладки: Витрата / Дохід / Переказ. Поле Опис підтримує список покупок — кнопка ✓ вставляє галочку.
+<br><br>
+↔️ <b>Свайп вліво</b> на рахунку — кнопки Додати / Редагувати / Видалити.
+<br><br>
+↩️ <b>Відмінити дію</b> — оранжева кнопка зліва внизу, зберігає до 20 кроків назад.`,
+
+  assets:`<b>Активи / Пасиви</b> — облік майна, інвестицій та зобов'язань.
+<br><br>
+📈 <b>Актив</b> — те що приносить або зберігає цінність (нерухомість, авто, рахунок, інвестиції).
+📉 <b>Пасив</b> — зобов'язання (кредит, іпотека, борг).
+<br><br>
+💰 <b>Вартість</b> = Поточна вартість (вручну) + усі витрати по активу за всю історію.
+<br><br>
+📊 <b>Чистий потік</b> — різниця між доходами і витратами по активу за обраний місяць. Щотижневі події враховуються автоматично.
+<br><br>
+ℹ️ <b>Кнопка Інфо</b> — деталізація активу: всі операції по місяцях, колонки Витрати / Дохід.
+<br><br>
+💳 <b>Списання при створенні</b> — можна одразу вказати суму та валюту списання з рахунку. Конвертація відбувається по курсу НБУ.`,
+
+  calendar:`<b>Календар</b> — планування регулярних платежів і доходів.
+<br><br>
+📅 <b>Натисни на день</b> — побачиш всі події та операції цього дня. Звідси можна редагувати або видаляти.
+<br><br>
+🔁 <b>Повторення</b> — подія може бути одноразовою, щотижневою або щомісячною. Щотижневі операції автоматично конвертуються по курсу НБУ на дату.
+<br><br>
+📋 <b>Найближчі 45 днів</b> — список запланованих подій що ще не виконані. Якщо подія вже записана як транзакція — вона зникає зі списку.
+<br><br>
+↔️ <b>Свайп вліво</b> на події — Редагувати / Видалити.`,
+
+  reports:`<b>Звіти</b> — аналіз фінансів за різні періоди.
+<br><br>
+📊 Графіки доходів і витрат по місяцях.
+<br><br>
+📥 <b>Експорт CSV</b> — вивантажити всі транзакції в таблицю.`,
+
+  settings:`<b>Налаштування</b>
+<br><br>
+💱 <b>Курси валют</b> — завантаження курсів НБУ. Потрібні для правильної конвертації при операціях між різновалютними рахунками.
+<br><br>
+🔄 <b>Локальні бекапи</b> — зашифровані копії даних у браузері. Зберігаються при кожній синхронізації (кнопка "Синхронізовано" вгорі).
+<br><br>
+🗑️ <b>Очистити кеш</b> — видаляє локальні бекапи та курси валют з кешу браузера. Дані в хмарі не зачіпаються.
+<br><br>
+🔐 <b>PIN-код</b> — шифрує всі дані перед збереженням у хмарі. Без PIN дані недоступні нікому, включаючи розробника.
+<br><br>
+⚠️ <b>Видалення акаунту</b> — незворотно видаляє всі дані з сервера.`
+};
+
+function showPageHelp(){
+  const screen=_currentScreen||'accounts';
+  document.getElementById('helpModalTitle').textContent='Довідка · '+TITLES[screen];
+  document.getElementById('helpModalBody').innerHTML=PAGE_HELP[screen]||'Для цієї сторінки довідка ще не написана.';
+  openModal('modalPageHelp');
 }
 
 /* ═══════════════════════════════════════════
@@ -3676,6 +3752,19 @@ function refreshAll(){renderAccounts();renderAssets().catch(e=>console.warn('[re
   finally{clearTimeout(forceHideTimer);}
 })();
 function showChangePwdDialog(){const b=document.getElementById('changePwdBlock');b.style.display=b.style.display==='none'?'block':'none';}
+
+function confirmClearCache(){
+  showConfirm('Очистити кеш браузера? Видаляться локальні бекапи та кешовані курси валют. Дані в хмарі не зміняться.',()=>{
+    // Видаляємо локальні бекапи
+    localStorage.removeItem('ft3_enc_backups');
+    localStorage.removeItem('ft3_hero_excluded');
+    // Очищаємо кеш курсів валют зі ST (але не всі дані)
+    ST.exchangeRates={};
+    saveST();
+    renderLocalBackupsList();
+    toast('✅ Кеш очищено');
+  });
+}
 
 function confirmDeleteUserAccount(){
   showConfirm('⚠️ Видалити акаунт назавжди? Всі дані буде знищено без можливості відновлення.',async()=>{
