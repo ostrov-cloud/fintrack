@@ -116,10 +116,10 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-wrap{position:relative;overflow:hidden;border-radius:var(--r-sm);}
 .acc-row-actions{position:absolute;top:0;right:0;bottom:0;display:flex;}
 .acc-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
-.acc-row-actions .acc-act-add{background:var(--gr2);}
-.acc-row-actions .acc-act-edit{background:var(--pu6);}
-.acc-row-actions .acc-act-archive{background:var(--or2);color:#fff;}
-.acc-row-actions .acc-act-del{background:var(--red);}
+.acc-row-actions .acc-act-add{background:#F2ECFF;color:#6D5AE6;border-left:1px solid rgba(109,90,230,.10);}
+.acc-row-actions .acc-act-edit{background:#F2ECFF;color:#6D5AE6;border-left:1px solid rgba(109,90,230,.10);}
+.acc-row-actions .acc-act-archive{background:#FFF0E8;color:#E86530;border-left:1px solid rgba(232,101,48,.14);}
+.acc-row-actions .acc-act-del{background:#FFECEF;color:#E24D57;border-left:1px solid rgba(226,77,87,.14);}
 .ptr-indicator{--ptr-orange:#FFD3A3;--ptr-deg:0deg;position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:opacity .12s ease;pointer-events:none;opacity:0;will-change:height,opacity;box-shadow:0 8px 24px rgba(45,27,105,.18);}
 .ptr-indicator.visible{opacity:1;}
 .ptr-indicator.refreshing{opacity:1;}
@@ -388,13 +388,13 @@ tr:hover .del-row-btn{opacity:1;}
 .export-btn:hover{background:var(--card2);border-color:var(--pu6);color:var(--pu6);}
 
 /* ── BOTTOM NAV (MOBILE) ── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(180deg,#5B4CC4,#7E5FC0);z-index:200;padding:6px 4px env(safe-area-inset-bottom,8px) 4px;box-shadow:0 -2px 12px rgba(0,0,0,.15);}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;padding:6px 4px env(safe-area-inset-bottom,8px) 4px;box-shadow:0 -12px 34px rgba(26,16,64,.34),0 -1px 0 rgba(255,211,163,.20);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
 .bottom-nav-inner{display:flex;justify-content:space-around;align-items:center;}
-.bnav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:none;cursor:pointer;padding:4px 6px;border-radius:8px;color:rgba(255,255,255,.55);transition:all .15s;min-width:48px;}
+.bnav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);cursor:pointer;padding:4px 6px;border-radius:8px;color:rgba(255,255,255,.62);transition:all .15s;min-width:48px;}
 .bnav-btn i{font-size:20px;}
 .bnav-btn span{font-size:9px;white-space:nowrap;}
-.bnav-btn.active{color:#fff;background:rgba(255,255,255,.18);}
-.bnav-btn:hover,.bnav-btn:focus-visible{color:#fff;outline:none;}
+.bnav-btn.active{color:#fff;background:rgba(255,211,163,.20);border-color:rgba(255,211,163,.38);box-shadow:0 0 20px rgba(255,211,163,.22),inset 0 0 0 1px rgba(255,255,255,.08);}
+.bnav-btn:hover,.bnav-btn:focus-visible{color:#fff;background:rgba(255,211,163,.13);border-color:rgba(255,211,163,.26);outline:none;}
 
 /* ── CONFIRM MODAL ── */
 .confirm-text{font-size:14px;color:var(--txt);margin-bottom:18px;text-align:center;line-height:1.5;}
@@ -793,7 +793,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.67</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.7.1</span>
     </div>
 
     <!-- Курси валют -->
@@ -854,7 +854,7 @@ tr:hover .del-row-btn{opacity:1;}
       <div class="panel-hdr">
         <span class="panel-title">Експорт даних</span>
       </div>
-      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Вивантажити всі транзакції у форматі CSV для аналізу в Excel або Google Sheets.</p>
+      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Вивантажити всі транзакції у форматі CSV для ��налізу в Excel або Google Sheets.</p>
       <button class="export-btn" onclick="exportCSV()" style="margin-bottom:8px">📥 Завантажити CSV</button>
     </div>
 
@@ -875,7 +875,7 @@ tr:hover .del-row-btn{opacity:1;}
         <span class="panel-title">Локальні автобекапи (на цьому пристрої)</span>
         <button class="panel-action" onclick="renderLocalBackupsList()">🔄 Оновити список</button>
       </div>
-      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Перед кожним збереженням застосунок автоматично робить копію даних у цьому браузері. Це страховка, якщо синхронізація з сервером не вдалась (наприклад, не було інтернету). Зберігаються останні 10 к��пій.</p>
+      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Перед кожним збереженням застосунок автоматично робить копію даних у цьому браузері. Це страховка, якщо синхронізація з сервером не вдалась (наприклад, не було інтернету). ��берігаються останні 10 к��пій.</p>
       <div id="localBackupsList" style="display:flex;flex-direction:column;gap:6px"></div>
     </div>
   </div>
@@ -1251,7 +1251,7 @@ tr:hover .del-row-btn{opacity:1;}
   <input type="email" class="lock-input" id="authUsername" placeholder="Email" maxlength="64" autocomplete="email"/>
   <div class="lock-pwd-wrap">
     <input type="password" class="lock-input" id="authPassword" placeholder="Пароль (мін. 6 символів)" maxlength="64" autocomplete="current-password" style="width:100%;max-width:100%;margin-bottom:0"/>
-    <button type="button" class="lock-eye" onclick="togglePwdVisibility()" aria-label="Показати пароль" tabindex="-1"><i class="ti ti-eye"></i></button>
+    <button type="button" class="lock-eye" onclick="togglePwdVisibility()" aria-label="Показа��и пароль" tabindex="-1"><i class="ti ti-eye"></i></button>
   </div>
   <div style="display:flex;gap:10px;margin-top:16px;max-width:300px;width:100%">
     <button class="lock-btn" onclick="authLogin()" style="flex:1">Увійти</button>
@@ -2013,7 +2013,7 @@ const PAGE_HELP={
 <br><br>
 📅 <b>Натисни на день</b> — побачиш всі події та операції цього дня. Звідси можна редагувати або видаляти.
 <br><br>
-🔁 <b>Повторення</b> — подія може бути одноразовою, щотижневою або щомісячною. Щотижневі операції автоматично конвертуються по курсу НБУ ��а дату.
+🔁 <b>Повторення</b> — подія може бути одноразовою, щотижневою або щомісячною. Щотижневі операції автоматично конвертуються по курс�� НБУ ��а дату.
 <br><br>
 📋 <b>Найближчі 45 днів</b> — список запланованих подій що ще не виконані. Якщо подія вже записана як транзакція — вона зникає зі списку.
 <br><br>
@@ -2324,14 +2324,11 @@ function saveChartAccounts(){
 }
 
 function getChartAccountsForRender(){
-  // Автоматично додаємо нові рахунки якщо ще не в налаштуваннях
+  // Якщо користувач зберіг вибір — використовуємо рівно вибрані рахунки.
+  // Інакше за замовчуванням беремо всі, включно з архівними, щоб історія не зникала.
   const saved=localStorage.getItem('ft3_chart_acc');
   if(!saved)return new Set(ST.accounts.map(a=>a.id));
-  const set=getChartAccounts();
-  ST.accounts.filter(a=>!a.archived).forEach(a=>{
-    if(!set.has(a.id))set.add(a.id); // нові рахунки включаємо автоматично
-  });
-  return set;
+  return getChartAccounts();
 }
 function getHeroExcluded(){
   try{return new Set(JSON.parse(localStorage.getItem('ft3_hero_excluded')||'[]'));}
@@ -2367,14 +2364,11 @@ function recordMonthlySnapshot(){
   const mk=monthKey(today());
   ST.accounts.forEach(acc=>{
     if(!ST.balanceSnapshots[acc.id])ST.balanceSnapshots[acc.id]={};
-    const rate=getRateForMonth(mk,acc.currency);
-    if(rate===null)return; // немає курсу — пропускаємо
-    // Баланс в UAH
-    const balUAH=acc.balance*rate;
-    // Потік за місяць в UAH
-    const txns=ST.transactions.filter(t=>t.accId===acc.id&&monthKey(t.date)===mk&&t.cat!=='💰 Старт'&&t.cat!=='⚙️ Система');
-    const flowUAH=txns.reduce((s,t)=>s+t.amount*rate,0);
-    ST.balanceSnapshots[acc.id][mk]={bal:Math.round(balUAH),flow:Math.round(flowUAH)};
+    const curRate=getRateForDateOrMonth(today(),acc.currency);
+    const txns=ST.transactions.filter(t=>t.accId===acc.id&&t.date&&monthKey(t.date)===mk);
+    const flowUAH=txns.filter(isReportFlowTxn).reduce((s,t)=>s+txnAmountUAH(t,acc),0);
+    const deltaUAH=txns.reduce((s,t)=>s+txnAmountUAH(t,acc),0);
+    ST.balanceSnapshots[acc.id][mk]={bal:Math.round((acc.balance||0)*curRate),flow:Math.round(flowUAH),delta:Math.round(deltaUAH)};
   });
 }
 
@@ -2421,9 +2415,13 @@ function getChartAccounts(){
 }
 function setChartAccounts(set){localStorage.setItem('ft3_chart_acc',JSON.stringify([...set]));}
 
-function getSnapshotMonths(){
+function getSnapshotMonths(chartAccs){
   const months=new Set();
-  Object.values(ST.balanceSnapshots).forEach(accData=>Object.keys(accData).forEach(mk=>months.add(mk)));
+  const ids=chartAccs?[...chartAccs]:Object.keys(ST.balanceSnapshots||{});
+  ids.forEach(accId=>{
+    const accData=ST.balanceSnapshots&&ST.balanceSnapshots[accId];
+    if(accData)Object.keys(accData).forEach(mk=>months.add(mk));
+  });
   return [...months].sort();
 }
 
@@ -2587,7 +2585,7 @@ async function doTransfer(){
   toast('Переказ виконано!');
 }
 
-/* ═══════════════════════════════════════════
+/* ═════════════════════════════��═════════════
    ASSETS
 ══���══════���═════════════════════════════════ */
 function openAddAsset(){
@@ -2968,7 +2966,7 @@ document.getElementById('assetInfoContent')&&document.getElementById('assetInfoC
 });
 
 function deleteAssetTxn(txnId,assetId){
-  showConfirm('Видалити цю операцію?',()=>{
+  showConfirm('��идалити цю операцію?',()=>{
     const txn=ST.transactions.find(t=>t.id===txnId);
     if(txn){const acc=ST.accounts.find(a=>a.id===txn.accId);if(acc)acc.balance-=txn.amount;}
     ST.transactions=ST.transactions.filter(t=>t.id!==txnId);
@@ -3529,7 +3527,7 @@ async function showDayEvents(ds){
   const rates=await fetchNBURates(ds);
   const ratesBody=document.getElementById('dayEvRatesBody');
   ratesBody.innerHTML=`
-    <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-usd" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-dollar"></i></span>USD: <b>${rates.USD?rates.USD.toFixed(2):'—'}</b> ₴</span>
+    <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-usd" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-dollar"></i></span>USD: <b>${rates.USD?rates.USD.toFixed(2):'—'}</b> ���</span>
     <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-eur" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-euro"></i></span>EUR: <b>${rates.EUR?rates.EUR.toFixed(2):'—'}</b> ₴</span>`;
   document.getElementById('dayEvRates').style.display='block';
   document.getElementById('dayEvAddBtn').onclick=()=>addEventForDay(ds);
@@ -3685,6 +3683,30 @@ function renderReport1(){
         y:{ticks:{color:'#9080b8',font:{size:10},callback:v=>fmt(v,'UAH')},grid:{color:'rgba(0,0,0,.06)'}}}}});
 }
 
+function getRateForDateOrMonth(date,cur){
+  if(cur==='UAH')return 1;
+  if(date&&ST.exchangeRates[date]&&ST.exchangeRates[date][cur]>0)return ST.exchangeRates[date][cur];
+  if(date){
+    const dates=Object.keys(ST.exchangeRates||{}).sort();
+    for(let i=dates.length-1;i>=0;i--){
+      const r=ST.exchangeRates[dates[i]];
+      if(dates[i]<=date&&r&&r[cur]>0)return r[cur];
+    }
+  }
+  return getRateForMonth(date?monthKey(date):monthKey(today()),cur)||1;
+}
+function isReportFlowTxn(t){
+  // Баланс має враховувати всі транзакції, але чистий потік не повинен рахувати
+  // стартові суми, системні коригування і перекази між власними рахунками.
+  if(t.cat==='💰 Старт'||t.cat==='⚙️ Система')return false;
+  if(t.type==='transfer'||t.cat==='Переказ')return false;
+  return true;
+}
+function txnAmountUAH(t,acc){
+  const rate=getRateForDateOrMonth(t.date,acc.currency);
+  return (Number(t.amount)||0)*rate;
+}
+
 function getMemoryHorizonMonths(h){
   const end=new Date();
   end.setDate(1);
@@ -3712,28 +3734,35 @@ function rebuildReportMemory(){
   const selected=getChartAccounts();
   const months=getMemoryHorizonMonths(h);
   if(!selected.size){toast('Оберіть рахунки для графіку',false);return;}
+
   selected.forEach(accId=>{
     const acc=ST.accounts.find(a=>a.id===accId);
     if(!acc)return;
     if(!ST.balanceSnapshots[acc.id])ST.balanceSnapshots[acc.id]={};
     months.forEach(mk=>{delete ST.balanceSnapshots[acc.id][mk];});
-    const flowByMonth={};
-    months.forEach(mk=>{
-      const rate=getRateForMonth(mk,acc.currency)||1;
-      const txns=ST.transactions.filter(t=>
-        t.accId===acc.id&&
-        t.date&&
-        isTxnInMemoryHorizon(t,h,mk)&&
-        t.cat!=='💰 Старт'&&t.cat!=='⚙️ Система'
-      );
-      flowByMonth[mk]=Math.round(txns.reduce((sum,t)=>sum+t.amount*rate,0));
+
+    const deltaByMonth={}, flowByMonth={};
+    months.forEach(mk=>{deltaByMonth[mk]=0;flowByMonth[mk]=0;});
+
+    ST.transactions.forEach(t=>{
+      if(t.accId!==acc.id||!t.date)return;
+      const mk=monthKey(t.date);
+      if(!months.includes(mk))return;
+      if(!isTxnInMemoryHorizon(t,h,mk))return;
+      const amtUAH=txnAmountUAH(t,acc);
+      // Для історичного балансу враховуємо ВСІ рухи по рахунку.
+      deltaByMonth[mk]+=amtUAH;
+      // Для чистого потоку — тільки реальні доходи/витрати.
+      if(isReportFlowTxn(t))flowByMonth[mk]+=amtUAH;
     });
-    const curRate=getRateForMonth(monthKey(today()),acc.currency)||1;
+
+    const curRate=getRateForDateOrMonth(today(),acc.currency);
     let runBal=Math.round((acc.balance||0)*curRate);
     months.slice().sort().reverse().forEach(mk=>{
-      const flow=flowByMonth[mk]||0;
-      ST.balanceSnapshots[acc.id][mk]={bal:runBal,flow};
-      runBal-=flow;
+      const flow=Math.round(flowByMonth[mk]||0);
+      const delta=Math.round(deltaByMonth[mk]||0);
+      ST.balanceSnapshots[acc.id][mk]={bal:runBal,flow,delta};
+      runBal-=delta;
     });
   });
   saveST();
@@ -3744,7 +3773,7 @@ function rebuildReportMemory(){
 function renderReport2(){
   const chartAccs=getChartAccountsForRender();
   const curMk=monthKey(today());
-  const allMonths=getSnapshotMonths();
+  const allMonths=getSnapshotMonths(chartAccs);
 
   // Минулі місяці з знімків
   const pastMonths=allMonths.filter(mk=>mk<=curMk);
@@ -3832,7 +3861,7 @@ document.addEventListener('click',e=>{
 
 /* ═══════════════════════════════════════════
    SETTINGS & CATEGORIES
-═══════════════════════════════════════════ */
+═══════════════════���═══════════════════════ */
 /* ═══════════════════════════════════════════
    SETTINGS: CURRENCY RATES
 ═══════════════════════════════════════════ */
@@ -3870,7 +3899,7 @@ function loadSettingsRates(){
   }
 }
 
-/* ═══════════════════════════════════════════
+/* ════════════════════���══════════════════════
    SETTINGS: RATE EDITOR
 ═══════════════════════════════════════════ */
 function openRateEditor(){
@@ -4223,7 +4252,7 @@ function closeConfirm(){
         txt.textContent='Помилка оновлення';
       }
     }catch(e){
-      txt.textContent='Помилка з\'єднання';
+      txt.textContent='Помилка з\'��днання';
     }
     resetState(1200);
   }
