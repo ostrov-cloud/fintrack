@@ -180,8 +180,8 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .dayev-row-actions .dayev-edit{background:var(--pu6);}
 .dayev-row-actions .dayev-del{background:var(--red);}
 .dayev-row-content{position:relative;z-index:1;background:var(--card);touch-action:pan-y;user-select:none;transition:transform .2s ease;border-radius:var(--r-sm);}
-.day-events-modal{max-width:420px;display:flex;flex-direction:column;max-height:90vh;overflow:hidden;}
-#dayEvList{max-height:246px;overflow-y:auto;overscroll-behavior:contain;margin-bottom:10px;padding-right:2px;flex:0 1 auto;}
+.day-events-modal{max-width:420px;height:min(78vh,620px);min-height:520px;display:flex;flex-direction:column;overflow:hidden;}
+#dayEvList{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;margin-bottom:10px;padding-right:2px;}
 .day-events-add{position:sticky;bottom:0;z-index:2;width:100%;margin-bottom:6px;flex-shrink:0;}
 
 .txn-list{display:flex;flex-direction:column;gap:7px;}
@@ -295,9 +295,9 @@ tr:hover .del-row-btn{opacity:1;}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:300;padding:20px;backdrop-filter:blur(4px);}
 .modal-bg.hidden{display:none;}
 .modal{background:var(--card);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.12);}
-.modal.day-events-modal{max-width:420px;display:flex;flex-direction:column;max-height:90vh;overflow:hidden!important;}
-#modalDayEvents #dayEvList{max-height:246px!important;overflow-y:scroll!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-bottom:10px;padding-right:2px;flex:0 0 auto;min-height:0;touch-action:pan-y;}
-#modalDayEvents .day-events-add{position:sticky;bottom:0;z-index:2;width:100%;margin-bottom:6px;flex-shrink:0;}
+.modal.day-events-modal{max-width:420px;height:min(78vh,620px);min-height:520px;display:flex;flex-direction:column;overflow:hidden!important;}
+#modalDayEvents #dayEvList{flex:1 1 auto;min-height:0!important;max-height:none!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-bottom:10px;padding-right:2px;touch-action:pan-y;}
+#modalDayEvents .day-events-add{position:sticky;bottom:0;z-index:2;width:100%;margin-bottom:6px;flex:0 0 auto;}
 .modal-title{font-size:16px;font-weight:600;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;color:var(--txt);}
 .close-x{background:var(--card2);border:0.5px solid var(--border);border-radius:50%;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--txt2);}
 .close-x:hover{background:var(--bg3);}
@@ -1301,7 +1301,7 @@ const ICON_GROUPS=[
 const ALL_ICONS=ICON_GROUPS.flatMap(g=>g.icons);
 const COLORS=['#534AB7','#993C1D','#0F6E56','#185FA5','#854F0B','#5a5a5a','#993556','#3B6D11'];
 const CUR_SYM={UAH:'₴',USD:'$',EUR:'€'};
-const MONTHS_UK=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+const MONTHS_UK=['С��чень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 const MONTHS_S=['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру'];
 const REP_LABELS={once:'Одноразово',weekly:'Щотижня',monthly:'Щомісяця',quarterly:'Щокварталу',yearly:'Щороку'};
 
@@ -1367,7 +1367,7 @@ async function loadST(){
    ІНДИКАТОР СТАНУ СИНХРОНІЗАЦІЇ
    Реальний стан: онлайн/офлайн (navigator.onLine) +
    результат останньої спроби запису в Firestore.
-═════════════════���══════���═════════════════ */
+════════════════════════���═════════════════ */
 let syncStatus='synced'; // 'synced' | 'syncing' | 'offline' | 'error'
 let syncErrorMsg='';
 
@@ -2577,7 +2577,7 @@ async function doTransfer(){
 
 /* ═══════════════════════════════════════════
    ASSETS
-═══════════════════════════════════════════ */
+═════════���═════════════════════════════════ */
 function openAddAsset(){
   document.getElementById('mAsEditId').value='';
   document.getElementById('modalAssetTitle').textContent='Актив / Борг';
@@ -3513,7 +3513,6 @@ async function showDayEvents(ds){
       </div>`;
     }).join('');
     initDayEvSwipe();
-    requestAnimationFrame(()=>fitDayEventsListToSixRows());
   }
   const rates=await fetchNBURates(ds);
   const ratesBody=document.getElementById('dayEvRatesBody');
@@ -3523,25 +3522,18 @@ async function showDayEvents(ds){
   document.getElementById('dayEvRates').style.display='block';
   document.getElementById('dayEvAddBtn').onclick=()=>addEventForDay(ds);
   openModal('modalDayEvents');
-  setTimeout(()=>fitDayEventsListToSixRows(),30);
+  setTimeout(()=>fitDayEventsListToSixRows(),80);
 }
 
 
 function fitDayEventsListToSixRows(){
   const list=document.getElementById('dayEvList');
   if(!list)return;
-  const rows=[...list.querySelectorAll('.dayev-row-wrap')];
-  if(rows.length<=6){
-    list.style.removeProperty('max-height');
-    list.style.removeProperty('overflow-y');
-    return;
-  }
-  const gap=parseFloat(getComputedStyle(list).rowGap||getComputedStyle(list).gap||'0')||0;
-  const h=rows.slice(0,6).reduce((sum,row)=>sum+row.getBoundingClientRect().height,0)+(gap*5)+2;
-  list.style.setProperty('max-height',Math.ceil(h)+'px','important');
-  list.style.setProperty('overflow-y','scroll','important');
-  list.style.webkitOverflowScrolling='touch';
+  list.style.removeProperty('max-height');
+  list.style.removeProperty('min-height');
+  list.style.setProperty('overflow-y','auto','important');
 }
+
 
 async function refreshDayRates(){
   if(!dayEvDate)return;
