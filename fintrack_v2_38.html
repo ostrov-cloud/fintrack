@@ -118,7 +118,7 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
 .acc-row-actions .acc-act-add{background:var(--gr2);}
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
-.acc-row-actions .acc-act-archive{background:var(--or3);}
+.acc-row-actions .acc-act-archive{background:var(--or2);color:#fff;}
 .acc-row-actions .acc-act-del{background:var(--red);}
 .ptr-indicator{--ptr-orange:#FFD3A3;--ptr-deg:0deg;position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:opacity .12s ease;pointer-events:none;opacity:0;will-change:height,opacity;box-shadow:0 8px 24px rgba(45,27,105,.18);}
 .ptr-indicator.visible{opacity:1;}
@@ -572,7 +572,10 @@ tr:hover .del-row-btn{opacity:1;}
       <div class="panel">
         <div class="panel-hdr">
           <span class="panel-title">Рахунки</span>
-          <button class="panel-action" onclick="openAddAcc()">+ Додати</button>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="panel-action" onclick="showAccountManagement()">Архів</button>
+            <button class="panel-action" onclick="openAddAcc()">+ Додати</button>
+          </div>
         </div>
         <div class="acc-list" id="accList">
           <div style="color:var(--txt3);font-size:13px;text-align:center;padding:20px">Рахунків ще немає</div>
@@ -779,7 +782,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.7.1</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.7</span>
     </div>
 
     <!-- Курси валют -->
@@ -861,7 +864,7 @@ tr:hover .del-row-btn{opacity:1;}
         <span class="panel-title">Локальні автобекапи (на цьому пристрої)</span>
         <button class="panel-action" onclick="renderLocalBackupsList()">🔄 Оновити список</button>
       </div>
-      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Перед кожним збереженням застосунок автоматично робить копію даних у цьому браузері. Це страховка, якщо синхронізація з сервером не вдалась (наприклад, не було інтернету). Зберігаються останні 10 копій.</p>
+      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Перед кожним збереженням застосунок автоматично робить копію даних у цьому браузері. Це страховка, якщо синхронізація з сервером не вдалась (наприклад, не було інтернету). Зберігаються останні 10 к��пій.</p>
       <div id="localBackupsList" style="display:flex;flex-direction:column;gap:6px"></div>
     </div>
   </div>
@@ -900,12 +903,12 @@ tr:hover .del-row-btn{opacity:1;}
     <div class="frow">
       <div class="field"><label>Валюта</label>
         <select id="mAccCur">
-          <option value="UAH">₴ Гривня (UAH)</option>
+          <option value="UAH">₴ Грив��я (UAH)</option>
           <option value="USD">$ Долар (USD)</option>
           <option value="EUR">€ Євро (EUR)</option>
         </select>
       </div>
-      <div class="field"><label>Початковий баланс</label><input type="number" id="mAccBal" placeholder="0.00"/></div>
+      <div class="field"><label>��очатковий баланс</label><input type="number" id="mAccBal" placeholder="0.00"/></div>
     </div>
     <div class="field"><label>Колір</label><div class="color-row" id="mAccColors"></div></div>
     <div class="btn-row">
@@ -1364,7 +1367,7 @@ async function loadST(){
    ІНДИКАТОР СТАНУ СИНХРОНІЗАЦІЇ
    Реальний стан: онлайн/офлайн (navigator.onLine) +
    результат останньої спроби запису в Firestore.
-══════════════════════════════════════════ */
+════════════════════════���═════════════════ */
 let syncStatus='synced'; // 'synced' | 'syncing' | 'offline' | 'error'
 let syncErrorMsg='';
 
@@ -1973,7 +1976,7 @@ const PAGE_HELP={
 <br><br>
 ↔️ <b>Свайп вліво</b> на рахунку — кнопки Додати / Редагувати / Архівувати / Видалити.
 <br><br>
-🗄️ <b>Архівувати</b> — ховає старий рахунок з основних списків і вибору для нових операцій, але всі його старі операції залишаються в календарі та звітах. Відновити або видалити назавжди можна в управлінні рахунками.
+🗄️ <b>Архівувати</b> — ховає старий рахунок з основних списків і вибору для нових операцій, але всі його старі операції залишаються в календарі та звітах. Відновити або видалити назавжди можна через кнопку <b>Архів</b> у блоці Рахунки або через <b>Звіти → Баланс та чистий потік → Рахунки</b>.
 <br><br>
 ⬇️ <b>Свайп вниз</b> зверху сторінки — Pull-to-Refresh. Потягни екран вниз приблизно на 30% висоти телефона, доки кругова шкала не дійде до 100%. Після цього запуститься оновлення даних.
 <br><br>
@@ -2012,11 +2015,11 @@ const PAGE_HELP={
 • <b>Реальна вартість</b> (помаранчева лінія) — той самий баланс але знецінений на вказаний % інфляції на рік. Показує скільки ці гроші коштуватимуть реально.<br>
 • <b>Фільтр</b> — враховувати тільки рахунки, або рахунки + активи.<br>
 • <b>Початковий баланс</b> — якщо хочеш змоделювати "що якби я почав з X грн".<br>
-• <b>Місячний потік</b> — якщо хочеш задати фіксований потік вручну замість автоматичного з подій.
+• <b>Місячний потік</b> — якщо хочеш задати фік��ований потік вручну замість автоматичного з подій.
 <br><br>
 <b>📊 Баланс та чистий потік</b><br>
 Два графіки на одній осі: баланс (ліворуч) та місячний потік (праворуч).<br>
-• <b>Ліворуч від "сьогодні"</b> — реальні історичні дані з транзакцій. Баланс відповідає показнику на головному екрані (враховує виключені рахунки). Потік — фактичний дохід мінус витрати за кожен місяць.<br>
+• <b>Ліворуч від "сь��годні"</b> — реальні історичні дані з транзакцій. Баланс відповідає показнику на головному екрані (враховує виключені рахунки). Потік — фактичний дохід мінус витрати за кожен місяць.<br>
 • <b>Праворуч</b> — прогноз на основі регулярних подій з Календаря.<br>
 • <b>Потік зараз</b> — реальний чистий потік поточного місяця.<br>
 • <b>Потік через 1 рік</b> — очікуваний потік виходячи з запланованих подій.<br>
@@ -2169,7 +2172,7 @@ function renderAccounts(){
       <div class="acc-row-actions">
         <button class="acc-act-add" data-idx="${i}" title="Додати операцію"><i class="ti ti-plus"></i></button>
         <button class="acc-act-edit" data-id="${a.id}" title="Редагувати"><i class="ti ti-pencil"></i></button>
-        <button class="acc-act-archive" data-id="${a.id}" title="Архівувати"><i class="ti ti-archive"></i></button>
+        <button class="acc-act-archive" data-id="${a.id}" title="Архівувати"><i class="ti ti-wallet"></i></button>
         <button class="acc-act-del" data-id="${a.id}" title="Видалити назавжди"><i class="ti ti-trash"></i></button>
       </div>
       <div class="acc-row${ST.selAcc===i?' active':''}" onclick="selectAcc(${i})">
