@@ -118,12 +118,18 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
 .acc-row-actions .acc-act-add{background:var(--gr2);}
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
-.ptr-indicator{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;height:0;overflow:hidden;background:var(--pu6);z-index:200;transition:height .2s ease;pointer-events:none;}
-.ptr-indicator.visible{height:52px;}
-.ptr-spinner{width:22px;height:22px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:ptr-spin .7s linear infinite;}
+.ptr-indicator{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:9px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:height .18s ease,opacity .18s ease;pointer-events:none;opacity:0;box-shadow:0 8px 24px rgba(45,27,105,.18);}
+.ptr-indicator.visible{opacity:1;}
+.ptr-indicator.refreshing{height:86px!important;opacity:1;}
+.ptr-brand{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;flex-shrink:0;}
+.ptr-spinner{width:22px;height:22px;border:2.5px solid rgba(255,255,255,.26);border-top-color:#fff;border-radius:50%;animation:ptr-spin .7s linear infinite;}
 @keyframes ptr-spin{to{transform:rotate(360deg)}}
-.ptr-arrow{width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;transition:transform .2s;}
-.ptr-text{color:#fff;font-size:12px;font-weight:600;margin-left:8px;letter-spacing:.03em;}
+.ptr-arrow{width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;transition:transform .08s linear;}
+.ptr-text-wrap{display:flex;flex-direction:column;line-height:1.15;}
+.ptr-text{color:#fff;font-size:12px;font-weight:700;letter-spacing:.03em;}
+.ptr-percent{color:rgba(255,255,255,.78);font-size:11px;font-weight:700;margin-top:3px;}
+.ptr-progress{position:absolute;left:0;bottom:0;height:3px;width:var(--ptr-progress,0%);background:rgba(255,255,255,.86);box-shadow:0 0 14px rgba(255,255,255,.45);}
+.content.ptr-content-lock{transform:translateY(86px);transition:transform .18s ease;}
 .hero-toggle-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);background:var(--card2);color:var(--txt3);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0;}
 .hero-toggle-btn:hover{border-color:var(--pu6);color:var(--pu6);}
 .hero-toggle-btn.excluded{background:var(--pu6);border-color:var(--pu6);color:#fff;opacity:.7;}
@@ -454,9 +460,14 @@ tr:hover .del-row-btn{opacity:1;}
 </div>
 
 <!-- PULL-TO-REFRESH INDICATOR -->
-<div class="ptr-indicator" id="ptrIndicator">
+<div class="ptr-indicator" id="ptrIndicator" aria-hidden="true">
+  <div class="ptr-brand"><i class="ti ti-diamond"></i></div>
   <div id="ptrIcon" class="ptr-arrow">↓</div>
-  <span class="ptr-text" id="ptrText">Потягніть для оновлення</span>
+  <div class="ptr-text-wrap">
+    <span class="ptr-text" id="ptrText">Потягніть для оновлення</span>
+    <span class="ptr-percent" id="ptrPercent">0%</span>
+  </div>
+  <div class="ptr-progress" id="ptrProgress"></div>
 </div>
 
 <div class="shell">
@@ -749,7 +760,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.7</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.8</span>
     </div>
 
     <!-- Курси валют -->
@@ -3934,58 +3945,75 @@ function closeConfirm(){
    PULL-TO-REFRESH
 ═══════════════════════════════════════════ */
 (function initPTR(){
-  const THRESHOLD=72;
-  let startY=0,currentY=0,isPulling=false,isRefreshing=false;
+  const THRESHOLD=96;
+  const MAX_PULL=118;
+  const LOCK_HEIGHT=86;
+  let startY=0,currentY=0,activeContent=null,isPulling=false,isRefreshing=false,hasTriggered=false;
   const ind=document.getElementById('ptrIndicator');
   const icon=document.getElementById('ptrIcon');
   const txt=document.getElementById('ptrText');
+  const pctEl=document.getElementById('ptrPercent');
+  const bar=document.getElementById('ptrProgress');
 
+  function scrollTopOf(el){
+    return Math.max(el?.scrollTop||0,window.scrollY||0,document.documentElement.scrollTop||0,document.body.scrollTop||0);
+  }
+  function isVerticalPull(dy,dx){return dy>8&&dy>Math.abs(dx)*1.25;}
+  function setHeight(px){ind.style.setProperty('--ptr-height',`${Math.max(0,px)}px`);}
+  function setProgress(pct){
+    const safe=Math.max(0,Math.min(100,Math.round(pct)));
+    ind.style.setProperty('--ptr-progress',`${safe}%`);
+    if(pctEl)pctEl.textContent=`${safe}%`;
+  }
   function setSpinner(){
+    ind.classList.add('refreshing','visible');
+    setHeight(LOCK_HEIGHT);
+    setProgress(100);
     icon.className='ptr-spinner';
     icon.textContent='';
+    icon.style.transform='';
     txt.textContent='Оновлення...';
+    activeContent?.classList.add('ptr-content-lock');
   }
-  function setArrow(pct){
+  function setPullState(pct,dy){
+    ind.classList.add('visible');
+    ind.classList.remove('refreshing');
+    setHeight(Math.min(MAX_PULL,Math.max(0,dy*.72)));
+    setProgress(pct);
     icon.className='ptr-arrow';
     icon.textContent='↓';
     icon.style.transform=`rotate(${Math.min(pct*1.8,180)}deg)`;
-    txt.textContent=pct>=100?'Відпустіть для оновлення':'Потягніть для оновлення';
+    txt.textContent=pct>=100?'Оновлюємо...':'Потягніть для оновлення';
   }
-  function hide(){
-    ind.classList.remove('visible');
-    isRefreshing=false;
-    setTimeout(()=>{icon.className='ptr-arrow';icon.textContent='↓';icon.style.transform='';txt.textContent='Потягніть для оновлення';},300);
+  function resetState(delay=0){
+    setTimeout(()=>{
+      ind.classList.remove('visible','refreshing');
+      activeContent?.classList.remove('ptr-content-lock');
+      setHeight(0);
+      setProgress(0);
+      icon.className='ptr-arrow';
+      icon.textContent='↓';
+      icon.style.transform='';
+      txt.textContent='Потягніть для оновлення';
+      isPulling=false;
+      isRefreshing=false;
+      hasTriggered=false;
+      activeContent=null;
+      currentY=0;
+    },delay);
   }
-
-  document.addEventListener('touchstart',e=>{
-    if(isRefreshing)return;
-    const el=e.target.closest('.content');
-    if(!el)return;
-    if(el.scrollTop>0)return;
-    startY=e.touches[0].clientY;
-    isPulling=true;
-  },{passive:true});
-
-  document.addEventListener('touchmove',e=>{
-    if(!isPulling||isRefreshing)return;
-    currentY=e.touches[0].clientY;
-    const dy=currentY-startY;
-    if(dy<=0){isPulling=false;return;}
-    const pct=Math.min(dy/THRESHOLD*100,120);
-    ind.classList.add('visible');
-    setArrow(pct);
-  },{passive:true});
-
-  document.addEventListener('touchend',async()=>{
-    if(!isPulling||isRefreshing)return;
-    isPulling=false;
-    const dy=currentY-startY;
-    if(dy<THRESHOLD){ind.classList.remove('visible');return;}
+  function haptic(){
+    try{ if(navigator.vibrate) navigator.vibrate(18); }catch(_e){}
+  }
+  async function runRefresh(){
+    if(hasTriggered)return;
+    hasTriggered=true;
     isRefreshing=true;
+    haptic();
     setSpinner();
     if(!navigator.onLine){
       txt.textContent='Немає інтернету';
-      setTimeout(hide,1800);
+      resetState(1800);
       return;
     }
     try{
@@ -4006,8 +4034,43 @@ function closeConfirm(){
     }catch(e){
       txt.textContent='Помилка з\'єднання';
     }
-    setTimeout(hide,1200);
-  });
+    resetState(1200);
+  }
+
+  document.addEventListener('touchstart',e=>{
+    if(isRefreshing)return;
+    const el=e.target.closest('.content');
+    if(!el||scrollTopOf(el)>0)return;
+    startY=e.touches[0].clientY;
+    currentY=startY;
+    activeContent=el;
+    isPulling=true;
+    hasTriggered=false;
+    setProgress(0);
+  },{passive:true});
+
+  document.addEventListener('touchmove',e=>{
+    if(!isPulling||isRefreshing)return;
+    const t=e.touches[0];
+    currentY=t.clientY;
+    const dy=currentY-startY;
+    const dx=t.clientX-(e.changedTouches?.[0]?.clientX||t.clientX);
+    if(!isVerticalPull(dy,dx)){if(dy<=0)resetState();return;}
+    if(scrollTopOf(activeContent)>0){resetState();return;}
+    const pct=Math.min(dy/THRESHOLD*100,100);
+    setPullState(pct,dy);
+    if(pct>=100)runRefresh();
+  },{passive:true});
+
+  document.addEventListener('touchcancel',()=>{
+    if(isPulling&&!isRefreshing)resetState();
+  },{passive:true});
+
+  document.addEventListener('touchend',()=>{
+    if(!isPulling||isRefreshing)return;
+    const dy=currentY-startY;
+    if(dy<THRESHOLD)resetState();
+  },{passive:true});
 })();
 
 function refreshAll(){renderAccounts();renderAssets().catch(e=>console.warn('[renderAssets]',e));}
