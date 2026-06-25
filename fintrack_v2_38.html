@@ -119,6 +119,7 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions .acc-act-add{background:var(--gr2);}
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
 .acc-row-actions .acc-act-archive{background:var(--or3);}
+.acc-row-actions .acc-act-del{background:var(--red);}
 .ptr-indicator{--ptr-orange:#FFD3A3;--ptr-deg:0deg;position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:opacity .12s ease;pointer-events:none;opacity:0;will-change:height,opacity;box-shadow:0 8px 24px rgba(45,27,105,.18);}
 .ptr-indicator.visible{opacity:1;}
 .ptr-indicator.refreshing{opacity:1;}
@@ -294,6 +295,9 @@ tr:hover .del-row-btn{opacity:1;}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:300;padding:20px;backdrop-filter:blur(4px);}
 .modal-bg.hidden{display:none;}
 .modal{background:var(--card);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.12);}
+.modal.day-events-modal{max-width:420px;display:flex;flex-direction:column;max-height:90vh;overflow:hidden!important;}
+#modalDayEvents #dayEvList{max-height:311px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-bottom:10px;padding-right:2px;flex:0 0 auto;min-height:0;}
+#modalDayEvents .day-events-add{position:sticky;bottom:0;z-index:2;width:100%;margin-bottom:6px;flex-shrink:0;}
 .modal-title{font-size:16px;font-weight:600;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;color:var(--txt);}
 .close-x{background:var(--card2);border:0.5px solid var(--border);border-radius:50%;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--txt2);}
 .close-x:hover{background:var(--bg3);}
@@ -748,7 +752,16 @@ tr:hover .del-row-btn{opacity:1;}
           <div class="leg-item"><div class="leg-line" style="background:var(--gr2)"></div>Чистий потік / міс (права вісь)</div>
           <div class="leg-item"><div style="width:18px;border-top:2px dashed var(--txt3)"></div>Прогноз</div>
         </div>
-        <button onclick="showAccountManagement()" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;color:var(--txt2);cursor:pointer;white-space:nowrap"><i class="ti ti-adjustments-horizontal"></i> Рахунки</button>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+          <select class="ctrl-select" id="r2MemoryH" style="font-size:11px;padding:5px 8px">
+            <option value="week">Тиждень</option>
+            <option value="month">Місяць</option>
+            <option value="year" selected>Рік</option>
+            <option value="5y">5 років</option>
+          </select>
+          <button onclick="rebuildReportMemory()" style="background:var(--or2);border:0.5px solid var(--or3);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;color:#fff;cursor:pointer;white-space:nowrap"><i class="ti ti-refresh"></i> Перезапис памʼяті</button>
+          <button onclick="showAccountManagement()" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;color:var(--txt2);cursor:pointer;white-space:nowrap"><i class="ti ti-adjustments-horizontal"></i> Рахунки</button>
+        </div>
       </div>
       <div class="chart-wrap"><canvas id="r2Chart"></canvas></div>
       <div class="stat-grid stat-grid-3" style="margin-top:12px">
@@ -766,7 +779,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.7.0</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.7.1</span>
     </div>
 
     <!-- Курси валют -->
@@ -1958,7 +1971,7 @@ const PAGE_HELP={
 <br><br>
 ➕ <b>Додати операцію</b> — натисни на рахунок або кнопку + внизу. В модалці вкладки: Витрата / Дохід / Переказ. Поле Опис підтримує список покупок — кнопка ✓ вставляє галочку.
 <br><br>
-↔️ <b>Свайп вліво</b> на рахунку — кнопки Додати / Редагувати / Архівувати.
+↔️ <b>Свайп вліво</b> на рахунку — кнопки Додати / Редагувати / Архівувати / Видалити.
 <br><br>
 🗄️ <b>Архівувати</b> — ховає старий рахунок з основних списків і вибору для нових операцій, але всі його старі операції залишаються в календарі та звітах. Відновити або видалити назавжди можна в управлінні рахунками.
 <br><br>
@@ -2007,7 +2020,9 @@ const PAGE_HELP={
 • <b>Праворуч</b> — прогноз на основі регулярних подій з Календаря.<br>
 • <b>Потік зараз</b> — реальний чистий потік поточного місяця.<br>
 • <b>Потік через 1 рік</b> — очікуваний потік виходячи з запланованих подій.<br>
-• <b>Ріст балансу</b> — на скільки зміниться баланс за обраний горизонт прогнозу.`,
+• <b>Ріст балансу</b> — на скільки зміниться баланс за обраний горизонт прогнозу.<br>
+• <b>Рахунки</b> — вибір рахунків, які входять у памʼять графіку.<br>
+• <b>Перезапис памʼяті</b> — перераховує памʼять графіку для обраних рахунків за горизонт: тиждень, місяць, рік або 5 років.`,
 
   settings:`<b>Налаштування</b>
 <br><br>
@@ -2155,6 +2170,7 @@ function renderAccounts(){
         <button class="acc-act-add" data-idx="${i}" title="Додати операцію"><i class="ti ti-plus"></i></button>
         <button class="acc-act-edit" data-id="${a.id}" title="Редагувати"><i class="ti ti-pencil"></i></button>
         <button class="acc-act-archive" data-id="${a.id}" title="Архівувати"><i class="ti ti-archive"></i></button>
+        <button class="acc-act-del" data-id="${a.id}" title="Видалити назавжди"><i class="ti ti-trash"></i></button>
       </div>
       <div class="acc-row${ST.selAcc===i?' active':''}" onclick="selectAcc(${i})">
         <div class="acc-ico" style="background:${a.color}22;color:${a.color}">${renderIcon(a.icon||a.emoji)}</div>
@@ -2276,8 +2292,6 @@ function renderAccountManagementModal(){
 }
 
 function showAccountManagement(){
-  reconstructSnapshots();
-  recordMonthlySnapshot();
   renderAccountManagementModal();
   openModal('modalAccMgmt');
 }
@@ -3361,7 +3375,7 @@ async function saveEditTxn(){
 let evSwipeOpenEl=null;
 const EV_ACT_W=120;
 const DAYEV_ACT_W=108;
-const ACC_ACT_W=162;
+const ACC_ACT_W=216;
 const TXN_ACT_W=108;
 const AI_ACT_W=162;
 const SWIPE_CONTENT_SELECTORS=['.ev-row-content','.dayev-row-content','.acc-row','.ai-row-content'];
@@ -3463,11 +3477,13 @@ document.getElementById('accList')&&document.getElementById('accList').addEventL
   const addBtn=e.target.closest('.acc-act-add');
   const editBtn=e.target.closest('.acc-act-edit');
   const archiveBtn=e.target.closest('.acc-act-archive');
-  if(!addBtn&&!editBtn&&!archiveBtn)return;
+  const delBtn=e.target.closest('.acc-act-del');
+  if(!addBtn&&!editBtn&&!archiveBtn&&!delBtn)return;
   closeAllSwipeRows('.acc-row');
   if(addBtn){selectAcc(parseInt(addBtn.dataset.idx,10));}
   else if(editBtn){editAccount(editBtn.dataset.id);}
-  else{archiveAccount(archiveBtn.dataset.id);}
+  else if(archiveBtn){archiveAccount(archiveBtn.dataset.id);}
+  else{permanentlyDeleteAccount(delBtn.dataset.id);}
 });
 
 async function showDayEvents(ds){
@@ -3494,6 +3510,7 @@ async function showDayEvents(ds){
       </div>`;
     }).join('');
     initDayEvSwipe();
+    requestAnimationFrame(()=>fitDayEventsListToSixRows());
   }
   const rates=await fetchNBURates(ds);
   const ratesBody=document.getElementById('dayEvRatesBody');
@@ -3503,6 +3520,24 @@ async function showDayEvents(ds){
   document.getElementById('dayEvRates').style.display='block';
   document.getElementById('dayEvAddBtn').onclick=()=>addEventForDay(ds);
   openModal('modalDayEvents');
+  setTimeout(()=>fitDayEventsListToSixRows(),30);
+}
+
+
+function fitDayEventsListToSixRows(){
+  const list=document.getElementById('dayEvList');
+  if(!list)return;
+  const rows=[...list.querySelectorAll('.dayev-row-wrap')];
+  if(rows.length<=6){
+    list.style.maxHeight='';
+    list.style.overflowY='visible';
+    return;
+  }
+  const gap=parseFloat(getComputedStyle(list).rowGap||getComputedStyle(list).gap||'0')||0;
+  const h=rows.slice(0,6).reduce((sum,row)=>sum+row.getBoundingClientRect().height,0)+(gap*5)+2;
+  list.style.maxHeight=Math.ceil(h)+'px';
+  list.style.overflowY='auto';
+  list.style.webkitOverflowScrolling='touch';
 }
 
 async function refreshDayRates(){
@@ -3643,18 +3678,72 @@ function renderReport1(){
         y:{ticks:{color:'#9080b8',font:{size:10},callback:v=>fmt(v,'UAH')},grid:{color:'rgba(0,0,0,.06)'}}}}});
 }
 
+function getMemoryHorizonMonths(h){
+  const end=new Date();
+  end.setDate(1);
+  const start=new Date(end);
+  if(h==='5y')start.setMonth(start.getMonth()-59);
+  else if(h==='year')start.setMonth(start.getMonth()-11);
+  else start.setMonth(start.getMonth()); // week/month rewrite current month bucket
+  const out=[];
+  const d=new Date(start);
+  while(d<=end){
+    out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    d.setMonth(d.getMonth()+1);
+  }
+  return out;
+}
+function isTxnInMemoryHorizon(t,h,mk){
+  if(monthKey(t.date)!==mk)return false;
+  if(h!=='week')return true;
+  const dt=new Date(t.date+'T00:00:00');
+  const from=new Date();from.setHours(0,0,0,0);from.setDate(from.getDate()-6);
+  return dt>=from;
+}
+function rebuildReportMemory(){
+  const h=document.getElementById('r2MemoryH')?.value||'year';
+  const selected=getChartAccounts();
+  const months=getMemoryHorizonMonths(h);
+  if(!selected.size){toast('Оберіть рахунки для графіку',false);return;}
+  selected.forEach(accId=>{
+    const acc=ST.accounts.find(a=>a.id===accId);
+    if(!acc)return;
+    if(!ST.balanceSnapshots[acc.id])ST.balanceSnapshots[acc.id]={};
+    months.forEach(mk=>{delete ST.balanceSnapshots[acc.id][mk];});
+    const flowByMonth={};
+    months.forEach(mk=>{
+      const rate=getRateForMonth(mk,acc.currency)||1;
+      const txns=ST.transactions.filter(t=>
+        t.accId===acc.id&&
+        t.date&&
+        isTxnInMemoryHorizon(t,h,mk)&&
+        t.cat!=='💰 Старт'&&t.cat!=='⚙️ Система'
+      );
+      flowByMonth[mk]=Math.round(txns.reduce((sum,t)=>sum+t.amount*rate,0));
+    });
+    const curRate=getRateForMonth(monthKey(today()),acc.currency)||1;
+    let runBal=Math.round((acc.balance||0)*curRate);
+    months.slice().sort().reverse().forEach(mk=>{
+      const flow=flowByMonth[mk]||0;
+      ST.balanceSnapshots[acc.id][mk]={bal:runBal,flow};
+      runBal-=flow;
+    });
+  });
+  saveST();
+  renderReport2();
+  toast('Памʼять графіку перезаписано');
+}
+
 function renderReport2(){
-  reconstructSnapshots();
-  recordMonthlySnapshot();
   const chartAccs=getChartAccountsForRender();
   const curMk=monthKey(today());
   const allMonths=getSnapshotMonths();
 
   // Минулі місяці з знімків
   const pastMonths=allMonths.filter(mk=>mk<=curMk);
-  // Майбутні: 12 місяців вперед
+  // Майбутні: за обраним горизонтом R2
   const futureMonths=[];
-  for(let i=1;i<=12;i++){
+  for(let i=1;i<=r2H;i++){
     const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+i);
     futureMonths.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
   }
