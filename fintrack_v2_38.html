@@ -525,7 +525,7 @@ tr:hover .del-row-btn{opacity:1;}
     <button class="bnav-btn" onclick="showScreen('calendar',this)" aria-label="Календар">
       <i class="ti ti-calendar"></i><span>Календар</span>
     </button>
-    <button class="bnav-btn" onclick="showScreen('reports',this)" aria-label="Зв��ти">
+    <button class="bnav-btn" onclick="showScreen('reports',this)" aria-label="Звіти">
       <i class="ti ti-chart-line"></i><span>Звіти</span>
     </button>
     <button class="bnav-btn" onclick="showScreen('settings',this)" aria-label="Налаштування">
@@ -793,7 +793,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.7.2</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.7.3</span>
     </div>
 
     <!-- Курси валют -->
@@ -854,7 +854,7 @@ tr:hover .del-row-btn{opacity:1;}
       <div class="panel-hdr">
         <span class="panel-title">Експорт даних</span>
       </div>
-      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Вивантажити всі транзакції у форматі CSV для ��налізу в Excel або Google Sheets.</p>
+      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Вивантажити всі транзакції у форматі CSV для аналізу в Excel або Google Sheets.</p>
       <button class="export-btn" onclick="exportCSV()" style="margin-bottom:8px">📥 Завантажити CSV</button>
     </div>
 
@@ -875,7 +875,7 @@ tr:hover .del-row-btn{opacity:1;}
         <span class="panel-title">Локальні автобекапи (на цьому пристрої)</span>
         <button class="panel-action" onclick="renderLocalBackupsList()">🔄 Оновити список</button>
       </div>
-      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Перед кожним збереженням застосунок автоматично робить ��опію даних у цьому браузері. Це страховка, якщо синхронізація з сервером не вдалась (наприклад, не було інтернету). ��берігаються останні 10 к��пій.</p>
+      <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Перед кожним збереженням застосунок автоматично робить копію даних у цьому браузері. Це страховка, якщо синхронізація з сервером не вдалась (наприклад, не було інтернету). Зберігаються останні 10 копій.</p>
       <div id="localBackupsList" style="display:flex;flex-direction:column;gap:6px"></div>
     </div>
   </div>
@@ -914,12 +914,12 @@ tr:hover .del-row-btn{opacity:1;}
     <div class="frow">
       <div class="field"><label>Валюта</label>
         <select id="mAccCur">
-          <option value="UAH">₴ Грив��я (UAH)</option>
+          <option value="UAH">₴ Гривня (UAH)</option>
           <option value="USD">$ Долар (USD)</option>
           <option value="EUR">€ Євро (EUR)</option>
         </select>
       </div>
-      <div class="field"><label>��очатковий баланс</label><input type="number" id="mAccBal" placeholder="0.00"/></div>
+      <div class="field"><label>Початковий баланс</label><input type="number" id="mAccBal" placeholder="0.00"/></div>
     </div>
     <div class="field"><label>Колір</label><div class="color-row" id="mAccColors"></div></div>
     <div class="btn-row">
@@ -1251,7 +1251,7 @@ tr:hover .del-row-btn{opacity:1;}
   <input type="email" class="lock-input" id="authUsername" placeholder="Email" maxlength="64" autocomplete="email"/>
   <div class="lock-pwd-wrap">
     <input type="password" class="lock-input" id="authPassword" placeholder="Пароль (мін. 6 символів)" maxlength="64" autocomplete="current-password" style="width:100%;max-width:100%;margin-bottom:0"/>
-    <button type="button" class="lock-eye" onclick="togglePwdVisibility()" aria-label="Показа��и пароль" tabindex="-1"><i class="ti ti-eye"></i></button>
+    <button type="button" class="lock-eye" onclick="togglePwdVisibility()" aria-label="Показати пароль" tabindex="-1"><i class="ti ti-eye"></i></button>
   </div>
   <div style="display:flex;gap:10px;margin-top:16px;max-width:300px;width:100%">
     <button class="lock-btn" onclick="authLogin()" style="flex:1">Увійти</button>
@@ -1313,7 +1313,7 @@ const ICON_GROUPS=[
 const ALL_ICONS=ICON_GROUPS.flatMap(g=>g.icons);
 const COLORS=['#534AB7','#993C1D','#0F6E56','#185FA5','#854F0B','#5a5a5a','#993556','#3B6D11'];
 const CUR_SYM={UAH:'₴',USD:'$',EUR:'€'};
-const MONTHS_UK=['С��чень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+const MONTHS_UK=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 const MONTHS_S=['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру'];
 const REP_LABELS={once:'Одноразово',weekly:'Щотижня',monthly:'Щомісяця',quarterly:'Щокварталу',yearly:'Щороку'};
 
@@ -1379,7 +1379,7 @@ async function loadST(){
    ІНДИКАТОР СТАНУ СИНХРОНІЗАЦІЇ
    Реальний стан: онлайн/офлайн (navigator.onLine) +
    результат останньої спроби запису в Firestore.
-════════════════════════���═════════════════ */
+════════════════════════════════════════════ */
 let syncStatus='synced'; // 'synced' | 'syncing' | 'offline' | 'error'
 let syncErrorMsg='';
 
@@ -1466,7 +1466,7 @@ function updateUndoBtn(){
 
 /* ═══════════════════════════════════════════
    ЛОКАЛЬНІ АВТОБЕКАПИ (localStorage)
-   Незалежна страховка від Firestore: навіть якщо за��ис
+   Незалежна страховка від Firestore: навіть якщо запис
    на сервер не дійде (немає мережі, помилка), копія
    стану лишається на цьому пристрої і її можна відновити.
 ══════════════════════════════════════════ */
@@ -1654,7 +1654,7 @@ async function submitPINSetup(){
   const data=_pinSetupLegacyData||Users.emptyST();
   ST={...ST,...data};ensureST();
   _showMainApp();
-  toast('🔐 Дані зашифровано PIN-код��м');
+  toast('🔐 Дані зашифровано PIN-кодом');
 }
 
 // ── PIN Entry ──
@@ -1984,7 +1984,7 @@ const PAGE_HELP={
 <br><br>
 💳 <b>Рахунки справа</b> — суми тільки по рахунках що не мають прив'язаних активів, згруповані по валютах.
 <br><br>
-➕ <b>Додати операцію</b> — натисни на рахун��к або кнопку + внизу. В модалці вкладки: Витрата / Дохід / Переказ. Поле Опис підтримує список покупок — кнопка ✓ вставляє галочку.
+➕ <b>Додати операцію</b> — натисни на рахунок або кнопку + внизу. В модалці вкладки: Витрата / Дохід / Переказ. Поле Опис підтримує список покупок — кнопка ✓ вставляє галочку.
 <br><br>
 ↔️ <b>Свайп вліво</b> на рахунку — кнопки Додати / Редагувати / Архівувати / Видалити.
 <br><br>
@@ -2013,7 +2013,7 @@ const PAGE_HELP={
 <br><br>
 📅 <b>Натисни на день</b> — побачиш всі події та операції цього дня. Звідси можна редагувати або видаляти.
 <br><br>
-🔁 <b>Повторення</b> — подія може бути одноразовою, щотижневою або щомісячною. Щотижневі операції автоматично конвертуються по курс�� НБУ ��а дату.
+🔁 <b>Повторення</b> — подія може бути одноразовою, щотижневою або щомісячною. Щотижневі операції автоматично конвертуються по курсу НБУ на дату.
 <br><br>
 📋 <b>Найближчі 45 днів</b> — список запланованих подій що ще не виконані. Якщо подія вже записана як транзакція — вона зникає зі списку.
 <br><br>
@@ -2027,11 +2027,11 @@ const PAGE_HELP={
 • <b>Реальна вартість</b> (помаранчева лінія) — той самий баланс але знецінений на вказаний % інфляції на рік. Показує скільки ці гроші коштуватимуть реально.<br>
 • <b>Фільтр</b> — враховувати тільки рахунки, або рахунки + активи.<br>
 • <b>Початковий баланс</b> — якщо хочеш змоделювати "що якби я почав з X грн".<br>
-• <b>Місячний потік</b> — якщо хочеш задати фік��ований потік вручну замість автоматичного з подій.
+• <b>Місячний потік</b> — якщо хочеш задати фіксований потік вручну замість автоматичного з подій.
 <br><br>
 <b>📊 Баланс та чистий потік</b><br>
 Два графіки на одній осі: баланс (ліворуч) та місячний потік (праворуч).<br>
-• <b>Ліворуч від "сь��годні"</b> — реальні історичні дані з транзакцій. Баланс відповідає показнику на головному екрані (враховує виключені рахунки). Потік — фактичний дохід мінус витрати за кожен місяць.<br>
+• <b>Ліворуч від "сьогодні"</b> — реальні історичні дані з транзакцій. Баланс відповідає показнику на головному екрані (враховує виключені рахунки). Потік — фактичний дохід мінус витрати за кожен місяць.<br>
 • <b>Праворуч</b> — прогноз на основі регулярних подій з Календаря.<br>
 • <b>Потік зараз</b> — реальний чистий потік поточного місяця.<br>
 • <b>Потік через 1 рік</b> — очікуваний потік виходячи з запланованих подій.<br>
@@ -2041,7 +2041,7 @@ const PAGE_HELP={
 
   settings:`<b>Налаштування</b>
 <br><br>
-💱 <b>Курси валют</b> — завантаження курсів НБУ. Потрібні для правильної конвертації при операціях між різнова��ютними рахунками.
+💱 <b>Курси валют</b> — завантаження курсів НБУ. Потрібні для правильної конвертації при операціях між різновалютними рахунками.
 <br><br>
 🔄 <b>Локальні бекапи</b> — зашифровані копії даних у браузері. Зберігаються при кожній синхронізації (кнопка "Синхронізовано" вгорі).
 <br><br>
@@ -2585,9 +2585,9 @@ async function doTransfer(){
   toast('Переказ виконано!');
 }
 
-/* ═════════════════════════════��═════════════
+/* ══════════════════════════════════════════
    ASSETS
-══���══════���═════════════════════════════════ */
+═══════════════════════════════════════════════ */
 function openAddAsset(){
   document.getElementById('mAsEditId').value='';
   document.getElementById('modalAssetTitle').textContent='Актив / Борг';
@@ -2966,7 +2966,7 @@ document.getElementById('assetInfoContent')&&document.getElementById('assetInfoC
 });
 
 function deleteAssetTxn(txnId,assetId){
-  showConfirm('��идалити цю операцію?',()=>{
+  showConfirm('Видалити цю операцію?',()=>{
     const txn=ST.transactions.find(t=>t.id===txnId);
     if(txn){const acc=ST.accounts.find(a=>a.id===txn.accId);if(acc)acc.balance-=txn.amount;}
     ST.transactions=ST.transactions.filter(t=>t.id!==txnId);
@@ -3527,7 +3527,7 @@ async function showDayEvents(ds){
   const rates=await fetchNBURates(ds);
   const ratesBody=document.getElementById('dayEvRatesBody');
   ratesBody.innerHTML=`
-    <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-usd" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-dollar"></i></span>USD: <b>${rates.USD?rates.USD.toFixed(2):'—'}</b> ���</span>
+    <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-usd" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-dollar"></i></span>USD: <b>${rates.USD?rates.USD.toFixed(2):'—'}</b> ₴</span>
     <span class="cur-chip" style="font-size:12px"><span class="cur-ico cur-eur" style="width:18px;height:18px;font-size:10px"><i class="ti ti-currency-euro"></i></span>EUR: <b>${rates.EUR?rates.EUR.toFixed(2):'—'}</b> ₴</span>`;
   document.getElementById('dayEvRates').style.display='block';
   document.getElementById('dayEvAddBtn').onclick=()=>addEventForDay(ds);
@@ -3861,7 +3861,7 @@ document.addEventListener('click',e=>{
 
 /* ═══════════════════════════════════════════
    SETTINGS & CATEGORIES
-═══════════════════���═══════════════════════ */
+═════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════
    SETTINGS: CURRENCY RATES
 ═══════════════════════════════════════════ */
@@ -3899,7 +3899,7 @@ function loadSettingsRates(){
   }
 }
 
-/* ════════════════════���══════════════════════
+/* ═════════════════════════════════════════════
    SETTINGS: RATE EDITOR
 ═══════════════════════════════════════════ */
 function openRateEditor(){
@@ -4252,7 +4252,7 @@ function closeConfirm(){
         txt.textContent='Помилка оновлення';
       }
     }catch(e){
-      txt.textContent='Помилка з\'��днання';
+      txt.textContent='Помилка з\'єднання';
     }
     resetState(1200);
   }
@@ -4379,7 +4379,7 @@ function confirmClearCache(){
 }
 
 function confirmDeleteUserAccount(){
-  showConfirm('⚠️ Видалити акау��т назавжди? Всі дані буде знищено без можливості відновлення.',async()=>{
+  showConfirm('⚠️ Видалити акаунт назавжди? Всі дані буде знищено без можливості відновлення.',async()=>{
     const result=await Users.deleteAccount();
     if(result.ok){
       toast('Акаунт видалено');
