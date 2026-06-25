@@ -118,7 +118,7 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
 .acc-row-actions .acc-act-add{background:var(--gr2);}
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
-.ptr-indicator{--ptr-orange:#FFD3A3;--ptr-deg:0deg;position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:height .18s ease,opacity .18s ease;pointer-events:none;opacity:0;box-shadow:0 8px 24px rgba(45,27,105,.18);}
+.ptr-indicator{--ptr-orange:#FFD3A3;--ptr-deg:0deg;position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:opacity .12s ease;pointer-events:none;opacity:0;will-change:height,opacity;box-shadow:0 8px 24px rgba(45,27,105,.18);}
 .ptr-indicator.visible{opacity:1;}
 .ptr-indicator.refreshing{height:86px!important;opacity:1;}
 .ptr-brand{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;flex-shrink:0;}
@@ -132,6 +132,7 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .ptr-text{color:#fff;font-size:12px;font-weight:700;letter-spacing:.03em;}
 .ptr-percent{color:rgba(255,211,163,.95);font-size:11px;font-weight:800;margin-top:3px;}
 .content.ptr-content-lock{transform:translateY(86px);transition:transform .18s ease;}
+.content.ptr-content-pulling{will-change:transform;}
 .hero-toggle-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);background:var(--card2);color:var(--txt3);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0;}
 .hero-toggle-btn:hover{border-color:var(--pu6);color:var(--pu6);}
 .hero-toggle-btn.excluded{background:var(--pu6);border-color:var(--pu6);color:#fff;opacity:.7;}
@@ -464,7 +465,7 @@ tr:hover .del-row-btn{opacity:1;}
 <!-- PULL-TO-REFRESH INDICATOR -->
 <div class="ptr-indicator" id="ptrIndicator" aria-hidden="true">
   <div class="ptr-brand"><i class="ti ti-diamond"></i></div>
-  <div id="ptrIcon" class="ptr-ring"><span>↓</span></div>
+  <div id="ptrIcon" class="ptr-ring"><span></span></div>
   <div class="ptr-text-wrap">
     <span class="ptr-text" id="ptrText">Потягніть на 30%</span>
     <span class="ptr-percent" id="ptrPercent">0%</span>
@@ -761,7 +762,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.8 Demo</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.8 Demo2</span>
     </div>
 
     <!-- Курси валют -->
@@ -3973,7 +3974,12 @@ function closeConfirm(){
     icon.textContent='';
     icon.style.transform='';
     txt.textContent='Оновлення...';
-    activeContent?.classList.add('ptr-content-lock');
+    if(activeContent){
+      activeContent.classList.remove('ptr-content-pulling');
+      activeContent.style.transition='transform .18s ease';
+      activeContent.style.transform='translateY('+LOCK_HEIGHT+'px)';
+      activeContent.classList.add('ptr-content-lock');
+    }
   }
   function setPullState(pct,dy){
     ind.classList.add('visible');
@@ -3981,18 +3987,27 @@ function closeConfirm(){
     setHeight(Math.min(MAX_PULL,Math.max(0,dy*.72)));
     setProgress(pct);
     icon.className='ptr-ring';
-    icon.innerHTML='<span>↓</span>';
-    icon.style.transform=`rotate(${Math.min(pct*1.8,180)}deg)`;
+    icon.innerHTML='<span></span>';
+    icon.style.transform='';
     txt.textContent=pct>=100?'Оновлюємо...':'Потягніть для оновлення';
   }
   function resetState(delay=0){
     setTimeout(()=>{
+      const el=activeContent;
       ind.classList.remove('visible','refreshing');
-      activeContent?.classList.remove('ptr-content-lock');
+      if(el){
+        el.classList.remove('ptr-content-lock','ptr-content-pulling');
+        el.style.transition='transform .18s ease';
+        el.style.transform='translateY(0px)';
+        setTimeout(()=>{
+          el.style.transition='';
+          el.style.transform='';
+        },190);
+      }
       setHeight(0);
       setProgress(0);
       icon.className='ptr-ring';
-      icon.innerHTML='<span>↓</span>';
+      icon.innerHTML='<span></span>';
       icon.style.transform='';
       txt.textContent='Потягніть на 30%';
       isPulling=false;
@@ -4003,7 +4018,8 @@ function closeConfirm(){
     },delay);
   }
   function haptic(){
-    try{ if(navigator.vibrate) navigator.vibrate(18); }catch(_e){}
+    try{ if(navigator.vibrate) navigator.vibrate([45,20,45]); }catch(_e){}
+    try{ window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium'); }catch(_e){}
   }
   async function runRefresh(){
     if(hasTriggered)return;
@@ -4047,6 +4063,9 @@ function closeConfirm(){
     isPulling=true;
     hasTriggered=false;
     setProgress(0);
+    activeContent.classList.add('ptr-content-pulling');
+    activeContent.style.transition='none';
+    activeContent.style.transform='translateY(0px)';
   },{passive:true});
 
   document.addEventListener('touchmove',e=>{
@@ -4055,12 +4074,18 @@ function closeConfirm(){
     currentY=t.clientY;
     const dy=currentY-startY;
     const dx=t.clientX-(e.changedTouches?.[0]?.clientX||t.clientX);
-    if(!isVerticalPull(dy,dx)){if(dy<=0)resetState();return;}
+    if(dy<=0){resetState();return;}
+    if(e.cancelable)e.preventDefault();
     if(scrollTopOf(activeContent)>0){resetState();return;}
+    if(activeContent){
+      activeContent.style.transition='none';
+      activeContent.style.transform=`translateY(${Math.min(MAX_PULL,dy*.38)}px)`;
+    }
+    if(!isVerticalPull(dy,dx) && dy<12)return;
     const pct=Math.min(dy/getThreshold()*100,100);
     setPullState(pct,dy);
     if(pct>=100)runRefresh();
-  },{passive:true});
+  },{passive:false});
 
   document.addEventListener('touchcancel',()=>{
     if(isPulling&&!isRefreshing)resetState();
