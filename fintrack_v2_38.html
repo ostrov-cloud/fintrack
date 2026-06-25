@@ -118,6 +118,7 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
 .acc-row-actions .acc-act-add{background:var(--gr2);}
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
+.acc-row-actions .acc-act-archive{background:var(--or3);}
 .ptr-indicator{--ptr-orange:#FFD3A3;--ptr-deg:0deg;position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:opacity .12s ease;pointer-events:none;opacity:0;will-change:height,opacity;box-shadow:0 8px 24px rgba(45,27,105,.18);}
 .ptr-indicator.visible{opacity:1;}
 .ptr-indicator.refreshing{opacity:1;}
@@ -178,6 +179,9 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .dayev-row-actions .dayev-edit{background:var(--pu6);}
 .dayev-row-actions .dayev-del{background:var(--red);}
 .dayev-row-content{position:relative;z-index:1;background:var(--card);touch-action:pan-y;user-select:none;transition:transform .2s ease;border-radius:var(--r-sm);}
+.day-events-modal{max-width:420px;display:flex;flex-direction:column;max-height:90vh;overflow:hidden;}
+#dayEvList{max-height:311px;overflow-y:auto;overscroll-behavior:contain;margin-bottom:10px;padding-right:2px;flex:0 1 auto;}
+.day-events-add{position:sticky;bottom:0;z-index:2;width:100%;margin-bottom:6px;flex-shrink:0;}
 
 .txn-list{display:flex;flex-direction:column;gap:7px;}
 .txn-row{display:flex;align-items:center;gap:10px;}
@@ -762,7 +766,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.9</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.7.0</span>
     </div>
 
     <!-- Курси валют -->
@@ -1147,6 +1151,7 @@ tr:hover .del-row-btn{opacity:1;}
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-ghost" id="assetMenuInfoBtn" style="display:flex;align-items:center;justify-content:flex-start;gap:8px"><i class="ti ti-info-circle"></i> Інфо</button>
       <button class="btn btn-ghost" id="assetMenuEditBtn" style="display:flex;align-items:center;justify-content:flex-start;gap:8px"><i class="ti ti-pencil"></i> Редагувати</button>
+      <button class="btn btn-ghost" id="assetMenuArchiveBtn" style="display:flex;align-items:center;justify-content:flex-start;gap:8px;color:var(--or4)"><i class="ti ti-archive"></i> Архівувати</button>
       <button class="btn btn-ghost" id="assetMenuDeleteBtn" style="display:flex;align-items:center;justify-content:flex-start;gap:8px;color:var(--red)"><i class="ti ti-trash"></i> Видалити</button>
     </div>
   </div>
@@ -1154,14 +1159,14 @@ tr:hover .del-row-btn{opacity:1;}
 
 <!-- MODAL: DAY EVENTS -->
 <div class="modal-bg hidden" id="modalDayEvents">
-  <div class="modal" style="max-width:420px">
+  <div class="modal day-events-modal">
     <div class="modal-title"><span id="dayEvTitle">Події</span> <div class="close-x" onclick="closeModal('modalDayEvents')">✕</div></div>
     <div id="dayEvRates" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;display:none">
       <span style="color:var(--txt3)">Курси валют</span>
       <div id="dayEvRatesBody" style="margin-top:6px;display:flex;gap:16px"></div>
     </div>
-    <div id="dayEvList" class="txn-list" style="max-height:350px;overflow-y:auto;margin-bottom:10px"></div>
-    <button class="btn btn-primary" style="width:100%;margin-bottom:6px" id="dayEvAddBtn" onclick="addEventForDay()">+ Нова подія</button>
+    <div id="dayEvList" class="txn-list"></div>
+    <button class="btn btn-primary day-events-add" id="dayEvAddBtn" onclick="addEventForDay()">+ Нова подія</button>
   </div>
 </div>
 
@@ -1309,6 +1314,7 @@ let charts={};
 let r1H=12, r2H=12;
 // asset month navigation: {year, month} — defaults to current month
 let assetMonth={year:new Date().getFullYear(), month:new Date().getMonth()};
+let showArchivedAssets=false;
 /* ═══════════════════════════════════════════
    STORAGE + AUTH
 ══════════════════════════════════════════ */
@@ -1316,6 +1322,7 @@ function ensureST(){
   ['transactions','assets','events'].forEach(k=>{if(!ST[k]||!Array.isArray(ST[k]))ST[k]=[];});
   if(!ST.accounts||!Array.isArray(ST.accounts))ST.accounts=[];
   ST.accounts.forEach(a=>{if(a.archived===undefined)a.archived=false;});
+  ST.assets.forEach(a=>{if(a.archived===undefined)a.archived=false;});
   if(!ST.categories||!ST.categories.expense||!ST.categories.income){
     ST.categories={expense:['🛒 Продукти','🏠 Житло','🚗 Транспорт','💊 Здоров\'я','🎬 Розваги','👗 Одяг','📚 Освіта','✈️ Подорожі','📦 Інше'],
                    income:['💼 Зарплата','💰 Фріланс','📈 Інвестиції','🏠 Оренда','🎁 Подарунок','💵 Інше']};
@@ -1431,7 +1438,7 @@ function updateUndoBtn(){
 
 /* ═══════════════════════════════════════════
    ЛОКАЛЬНІ АВТОБЕКАПИ (localStorage)
-   Незалежна страховка від Firestore: навіть якщо запис
+   Незалежна страховка від Firestore: навіть якщо за��ис
    на сервер не дійде (немає мережі, помилка), копія
    стану лишається на цьому пристрої і її можна відновити.
 ══════════════════════════════════════════ */
@@ -1619,7 +1626,7 @@ async function submitPINSetup(){
   const data=_pinSetupLegacyData||Users.emptyST();
   ST={...ST,...data};ensureST();
   _showMainApp();
-  toast('🔐 Дані зашифровано PIN-кодом');
+  toast('🔐 Дані зашифровано PIN-код��м');
 }
 
 // ── PIN Entry ──
@@ -1638,19 +1645,23 @@ async function submitPINEntry(){
   const pin=document.getElementById('pinEntry').value;
   const err=document.getElementById('pinEntryError');
   if(!pin||pin.length<4){err.textContent='Введіть PIN';return;}
-  err.textContent='⏳ Перевірка...';
+  err.textContent='⏳ Розблоковую...';
   const btn=document.querySelector('#modalPINEntry .btn-primary');
   if(btn)btn.disabled=true;
+  // Даємо браузеру перемалювати кнопку/текст перед важким розшифруванням.
+  await new Promise(r=>setTimeout(r,30));
   const result=await Users.unlockWithPIN(pin);
   if(btn)btn.disabled=false;
   if(!result.ok){err.textContent=result.error;return;}
   closeModal('modalPINEntry');
   ST={...ST,...result.data};ensureST();
-  _showMainApp();
+  // Після PIN не оновлюємо дані одразу: швидко показуємо інтерфейс,
+  // а важкі локальні перерахунки запускаємо відкладено.
+  _showMainApp({deferHeavy:true,skipRates:true});
 }
 
 // Фінальний показ застосунку після успішного auth+PIN
-function _showMainApp(){
+function _showMainApp(opts={}){
   // Ховаємо auth-екран і відновлюємо головний layout
   const authScr=document.getElementById('authScreen');
   if(authScr)authScr.style.display='none';
@@ -1665,7 +1676,31 @@ function _showMainApp(){
   updateUserIndicator();
   const now=new Date();calY=now.getFullYear();calM=now.getMonth();
   lastSnapshot=JSON.stringify(ST);
-  processRecurringEvents();reconstructSnapshots();recordMonthlySnapshot();refreshAll();syncCategorySelects();loadSettingsRates();refreshCalendarRates();
+
+  if(opts.deferHeavy){
+    // Швидкий перший кадр після PIN: тільки те, що треба побачити одразу.
+    renderAccounts();
+    syncCategorySelects();
+    updateUndoBtn();
+
+    // Важкі локальні перерахунки — після показу інтерфейсу, щоб не було зависання.
+    setTimeout(()=>{
+      try{
+        processRecurringEvents();
+        reconstructSnapshots();
+        recordMonthlySnapshot();
+        renderAssets().catch(e=>console.warn('[renderAssets]',e));
+        syncCategorySelects();
+        loadSettingsRates();
+        if(!opts.skipRates)refreshCalendarRates();
+        lastSnapshot=JSON.stringify(ST);
+      }catch(e){console.warn('[Deferred startup]',e);}
+    },180);
+    return;
+  }
+
+  processRecurringEvents();reconstructSnapshots();recordMonthlySnapshot();refreshAll();syncCategorySelects();loadSettingsRates();
+  if(!opts.skipRates)refreshCalendarRates();
 }
 
 async function showAuthScreen(){
@@ -1923,7 +1958,9 @@ const PAGE_HELP={
 <br><br>
 ➕ <b>Додати операцію</b> — натисни на рахунок або кнопку + внизу. В модалці вкладки: Витрата / Дохід / Переказ. Поле Опис підтримує список покупок — кнопка ✓ вставляє галочку.
 <br><br>
-↔️ <b>Свайп вліво</b> на рахунку — кнопки Додати / Редагувати / Видалити.
+↔️ <b>Свайп вліво</b> на рахунку — кнопки Додати / Редагувати / Архівувати.
+<br><br>
+🗄️ <b>Архівувати</b> — ховає старий рахунок з основних списків і вибору для нових операцій, але всі його старі операції залишаються в календарі та звітах. Відновити або видалити назавжди можна в управлінні рахунками.
 <br><br>
 ⬇️ <b>Свайп вниз</b> зверху сторінки — Pull-to-Refresh. Потягни екран вниз приблизно на 30% висоти телефона, доки кругова шкала не дійде до 100%. Після цього запуститься оновлення даних.
 <br><br>
@@ -1939,6 +1976,8 @@ const PAGE_HELP={
 📊 <b>Чистий потік</b> — різниця між доходами і витратами по активу за обраний місяць. Щотижневі події враховуються автоматично.
 <br><br>
 ℹ️ <b>Кнопка Інфо</b> — деталізація активу: всі операції по місяцях, колонки Витрати / Дохід.
+<br><br>
+🗄️ <b>Архівувати актив</b> — ховає актив або пасив з основного списку, але не видаляє пов’язані історичні операції. Архів можна показати внизу таблиці активів і за потреби відновити.
 <br><br>
 💳 <b>Списання при створенні</b> — можна одразу вказати суму та валюту списання з рахунку. Конвертація відбувається по курсу НБУ.`,
 
@@ -1972,7 +2011,7 @@ const PAGE_HELP={
 
   settings:`<b>Налаштування</b>
 <br><br>
-💱 <b>Курси валют</b> — завантаження курсів НБУ. Потрібні для правильної конвертації при операціях між різновалютними рахунками.
+💱 <b>Курси валют</b> — завантаження курсів НБУ. Потрібні для правильної конвертації при операціях між різнова��ютними рахунками.
 <br><br>
 🔄 <b>Локальні бекапи</b> — зашифровані копії даних у браузері. Зберігаються при кожній синхронізації (кнопка "Синхронізовано" вгорі).
 <br><br>
@@ -2021,20 +2060,23 @@ function editAccount(id){
   openModal('modalAcc');
 }
 
-function deleteAccount(id){
-  showConfirm('Архівувати цей рахунок? Він зникне з головного екрану, але його історія збережеться для графіків.',()=>{
+function archiveAccount(id){
+  showConfirm('Архівувати цей рахунок? Він зникне з основних списків, але всі старі операції залишаться в календарі та звітах.',()=>{
     const acc=ST.accounts.find(a=>a.id===id);
     if(acc){
       acc.archived=true;
-      ST.events=ST.events.filter(e=>e.accId!==id);
-      ST.assets.forEach(a=>{if(a.linkedAccId===id)a.linkedAccId='';});
-      if(ST.selAcc!==null){
-        const activeIdx=ST.accounts.filter(a=>!a.archived).findIndex(a=>a.id===id);
-        if(activeIdx>=0)ST.selAcc=null;
-      }
+      // Історичні транзакції та заплановані події не чіпаємо — рахунок лише ховається з робочих списків.
+      if(ST.selAcc!==null&&ST.accounts[ST.selAcc]?.id===id)ST.selAcc=null;
     }
-    saveST();refreshAll();toast('Рахунок архівовано');
+    saveST();refreshAll();renderAccountManagementModal();toast('Рахунок архівовано');
   });
+}
+function deleteAccount(id){archiveAccount(id);}
+function restoreAccount(id){
+  const acc=ST.accounts.find(a=>a.id===id);
+  if(!acc)return;
+  acc.archived=false;
+  saveST();refreshAll();renderAccountManagementModal();toast('Рахунок відновлено');
 }
 
 function permanentlyDeleteAccount(id){
@@ -2102,16 +2144,17 @@ function saveAccount(){
 
 function renderAccounts(){
   const ul=document.getElementById('accList');
-  if(!ST.accounts.length){ul.innerHTML='<div style="color:var(--txt3);font-size:13px;text-align:center;padding:20px">Рахунків ще немає</div>';return;}
+  const activeAccounts=ST.accounts.map((a,i)=>({a,i})).filter(x=>!x.a.archived);
+  if(!activeAccounts.length){ul.innerHTML='<div style="color:var(--txt3);font-size:13px;text-align:center;padding:20px">Активних рахунків немає</div>';return;}
   const excluded=getHeroExcluded();
-  ul.innerHTML=ST.accounts.map((a,i)=>{
+  ul.innerHTML=activeAccounts.map(({a,i})=>{
     const isExcluded=excluded.has(a.id);
     return `
     <div class="acc-row-wrap">
       <div class="acc-row-actions">
         <button class="acc-act-add" data-idx="${i}" title="Додати операцію"><i class="ti ti-plus"></i></button>
         <button class="acc-act-edit" data-id="${a.id}" title="Редагувати"><i class="ti ti-pencil"></i></button>
-        <button class="acc-act-del" data-id="${a.id}" title="Видалити"><i class="ti ti-trash"></i></button>
+        <button class="acc-act-archive" data-id="${a.id}" title="Архівувати"><i class="ti ti-archive"></i></button>
       </div>
       <div class="acc-row${ST.selAcc===i?' active':''}" onclick="selectAcc(${i})">
         <div class="acc-ico" style="background:${a.color}22;color:${a.color}">${renderIcon(a.icon||a.emoji)}</div>
@@ -2130,10 +2173,10 @@ function renderAccounts(){
   // hero totals
   const td=today();
   const rates=ST.exchangeRates[td]||{UAH:1,USD:41,EUR:44};
-  const linkedAccIds=new Set(ST.assets.map(a=>a.linkedAccId).filter(Boolean));
+  const linkedAccIds=new Set(ST.assets.filter(a=>!a.archived).map(a=>a.linkedAccId).filter(Boolean));
 
   // Великий баланс — всі рахунки крім виключених вручну
-  const heroAccs=ST.accounts.filter(a=>!excluded.has(a.id));
+  const heroAccs=ST.accounts.filter(a=>!a.archived&&!excluded.has(a.id));
   const heroUAH=heroAccs.filter(a=>a.currency==='UAH').reduce((s,a)=>s+a.balance,0);
   const heroUSD=heroAccs.filter(a=>a.currency==='USD').reduce((s,a)=>s+a.balance,0);
   const heroEUR=heroAccs.filter(a=>a.currency==='EUR').reduce((s,a)=>s+a.balance,0);
@@ -2175,19 +2218,25 @@ function renderAccounts(){
   // filter
   const sel=document.getElementById('txnFilter');
   const prev=sel.value;
-  sel.innerHTML='<option value="all">Всі</option>'+ST.accounts.map(a=>`<option value="${a.id}">${stripIconPrefix(a.name)}</option>`).join('');
+  sel.innerHTML='<option value="all">Всі</option>'+ST.accounts.filter(a=>!a.archived).map(a=>`<option value="${a.id}">${stripIconPrefix(a.name)}</option>`).join('');
   sel.value=prev;
   renderTxns();
   // sync selects in modals
   syncAccSelects();
 }
 
+function accountOptionsHtml(selectedId='',includeBlank=false){
+  const active=ST.accounts.filter(a=>!a.archived);
+  const selectedArchived=selectedId?ST.accounts.find(a=>a.id===selectedId&&a.archived):null;
+  const list=selectedArchived?[selectedArchived,...active]:active;
+  const opts=list.map(a=>`<option value="${a.id}" ${a.id===selectedId?'selected':''}>${stripIconPrefix(a.name)}${a.archived?' · архів':''}</option>`).join('');
+  return (includeBlank?'<option value="">— не списувати —</option>':'')+opts;
+}
 function syncAccSelects(){
-  const opts=ST.accounts.map(a=>`<option value="${a.id}">${stripIconPrefix(a.name)}</option>`).join('');
   ['mAsFromAcc','mEvAcc','qTrTo'].forEach(id=>{
     const el=document.getElementById(id);
-    const prefix=id==='mAsFromAcc'?'<option value="">— не списувати —</option>':'';
-    el.innerHTML=prefix+opts;
+    if(!el)return;
+    el.innerHTML=accountOptionsHtml('',id==='mAsFromAcc');
   });
   syncCategorySelects();
 }
@@ -2219,6 +2268,7 @@ function renderAccountManagementModal(){
           <div style="font-size:13px;font-weight:500;color:var(--txt2)">${stripIconPrefix(a.name)}</div>
           <div style="font-size:11px;color:var(--txt3)">${a.currency} · архів</div>
         </div>
+        <button onclick="restoreAccount('${a.id}')" style="background:none;border:none;color:var(--gr);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0" title="Відновити"><i class="ti ti-rotate-clockwise"></i></button>
         <button onclick="permanentlyDeleteAccount('${a.id}')" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0" title="Видалити назавжди"><i class="ti ti-trash"></i></button>
       </div>`).join('');
   }
@@ -2247,7 +2297,7 @@ function saveChartAccounts(){
 function getChartAccountsForRender(){
   // Автоматично додаємо нові рахунки якщо ще не в налаштуваннях
   const saved=localStorage.getItem('ft3_chart_acc');
-  if(!saved)return new Set(ST.accounts.filter(a=>!a.archived).map(a=>a.id));
+  if(!saved)return new Set(ST.accounts.map(a=>a.id));
   const set=getChartAccounts();
   ST.accounts.filter(a=>!a.archived).forEach(a=>{
     if(!set.has(a.id))set.add(a.id); // нові рахунки включаємо автоматично
@@ -2337,8 +2387,8 @@ function getChartAccounts(){
     const saved=JSON.parse(localStorage.getItem('ft3_chart_acc')||'null');
     if(saved)return new Set(saved);
   }catch(e){}
-  // За замовчуванням — всі не архівовані
-  return new Set(ST.accounts.filter(a=>!a.archived).map(a=>a.id));
+  // За замовчуванням — всі рахунки, включно з архівними, щоб історія не зникала зі звітів
+  return new Set(ST.accounts.map(a=>a.id));
 }
 function setChartAccounts(set){localStorage.setItem('ft3_chart_acc',JSON.stringify([...set]));}
 
@@ -2546,7 +2596,7 @@ function editAsset(id){
   document.getElementById('mAsDeductInfo').textContent='';
   buildIconPicker('mAsEmoji',selIcon);
   syncAccSelects();
-  if(asset.linkedAccId)document.getElementById('mAsFromAcc').value=asset.linkedAccId;
+  if(asset.linkedAccId){document.getElementById('mAsFromAcc').innerHTML=accountOptionsHtml(asset.linkedAccId,true);document.getElementById('mAsFromAcc').value=asset.linkedAccId;}
   openModal('modalAsset');
 }
 function setAssetType(t){
@@ -2629,8 +2679,10 @@ function getAssetTotalValue(item){
 }
 async function renderAssets(){
   const body=document.getElementById('assetBody');
-  const assets=ST.assets.filter(a=>a.type==='asset');
-  const liabs=ST.assets.filter(a=>a.type==='liability');
+  const activeAssetsAll=ST.assets.filter(a=>!a.archived);
+  const archivedAssetsAll=ST.assets.filter(a=>a.archived);
+  const assets=activeAssetsAll.filter(a=>a.type==='asset');
+  const liabs=activeAssetsAll.filter(a=>a.type==='liability');
 
   // Update month label & next-button state
   const now=new Date();
@@ -2644,7 +2696,7 @@ async function renderAssets(){
   processRecurringEvents();
 
   let html='';
-  if(!ST.assets.length){
+  if(!activeAssetsAll.length&&!archivedAssetsAll.length){
     body.innerHTML=`<tr><td colspan="3" style="text-align:center;padding:28px;color:var(--txt3);font-size:13px">Ще нічого немає</td></tr>`;
     updateAssetSummary(); return;
   }
@@ -2661,14 +2713,14 @@ async function renderAssets(){
     const exp=txns.filter(t=>t.amount<0).reduce((s,t)=>s+toAssetCur(t.amount,lnk.currency),0);
     return{inc,exp,lnk};
   };
-  const renderRows=async(arr)=>{
+  const renderRows=async(arr,isArchived=false)=>{
     if(!arr.length)return '';
     let r='';
     for(const item of arr){
       const isA=item.type==='asset';
       const{inc,exp,lnk}=await getMonthTxns(item);
       const totalVal=getAssetTotalValue(item);
-      r+=`<tr onclick="openAssetMenu('${item.id}')" style="cursor:pointer">
+      r+=`<tr onclick="openAssetMenu('${item.id}')" style="cursor:pointer;${isArchived?'opacity:.62':''}">
         <td><div class="name-cell">
           <div class="tbl-ico" style="background:${isA?'rgba(29,158,117,.15)':'rgba(216,90,48,.15)'};color:${isA?'#1D9E75':'#D85A30'}">${renderIcon(item.icon||item.emoji)}</div>
           <div><div class="asset-name">${item.name}</div>
@@ -2686,6 +2738,10 @@ async function renderAssets(){
   };
   html+=await renderRows(assets);
   html+=await renderRows(liabs);
+  if(archivedAssetsAll.length){
+    html+=`<tr><td colspan="3" style="padding:10px;text-align:center"><button class="btn btn-ghost" style="font-size:12px;padding:7px 12px" onclick="event.stopPropagation();toggleArchivedAssets()">${showArchivedAssets?'Сховати архів':'Показати архів'} (${archivedAssetsAll.length})</button></td></tr>`;
+    if(showArchivedAssets)html+=await renderRows(archivedAssetsAll,true);
+  }
   body.innerHTML=html;
 
   updateAssetSummary();
@@ -2697,7 +2753,7 @@ async function updateAssetSummary(){
   const rates=await fetchNBURates(today());
   let totalVal=0, totalInc=0, totalExp=0;
 
-  ST.assets.forEach(a=>{
+  ST.assets.filter(a=>!a.archived).forEach(a=>{
     const rate=a.currency==='UAH'?1:(rates[a.currency]||1);
     // Вартість — всі записи (і активи, і пасиви)
     totalVal+=getAssetTotalValue(a)*rate;
@@ -2718,8 +2774,22 @@ async function updateAssetSummary(){
   document.getElementById('asNet').className='stat-val '+(net>=0?'c-gr':'c-or');
 }
 
+function archiveAsset(id){
+  showConfirm('Архівувати цей актив? Він зникне з основного списку, але пов’язана історія операцій залишиться.',()=>{
+    const item=ST.assets.find(a=>a.id===id);
+    if(item)item.archived=true;
+    saveST();refreshAll();toast('Актив архівовано');
+  });
+}
+function restoreAsset(id){
+  const item=ST.assets.find(a=>a.id===id);
+  if(!item)return;
+  item.archived=false;
+  saveST();refreshAll();toast('Актив відновлено');
+}
+function toggleArchivedAssets(){showArchivedAssets=!showArchivedAssets;renderAssets();}
 function deleteAsset(id){
-  showConfirm('Видалити цей актив?',()=>{
+  showConfirm('Видалити цей актив назавжди?',()=>{
     ST.assets=ST.assets.filter(a=>a.id!==id);
     saveST();refreshAll();
     toast('Актив видалено');
@@ -2735,6 +2805,12 @@ function openAssetMenu(id){
   infoBtn.style.display=lnk?'flex':'none';
   infoBtn.onclick=()=>{closeModal('modalAssetMenu');showAssetInfo(id);};
   document.getElementById('assetMenuEditBtn').onclick=()=>{closeModal('modalAssetMenu');editAsset(id);};
+  const archBtn=document.getElementById('assetMenuArchiveBtn');
+  if(archBtn){
+    archBtn.innerHTML=item.archived?'<i class="ti ti-rotate-clockwise"></i> Відновити':'<i class="ti ti-archive"></i> Архівувати';
+    archBtn.style.color=item.archived?'var(--gr)':'var(--or4)';
+    archBtn.onclick=()=>{closeModal('modalAssetMenu');item.archived?restoreAsset(id):archiveAsset(id);};
+  }
   document.getElementById('assetMenuDeleteBtn').onclick=()=>{closeModal('modalAssetMenu');deleteAsset(id);};
   openModal('modalAssetMenu');
 }
@@ -3386,12 +3462,12 @@ document.getElementById('txnList')&&document.getElementById('txnList').addEventL
 document.getElementById('accList')&&document.getElementById('accList').addEventListener('click',e=>{
   const addBtn=e.target.closest('.acc-act-add');
   const editBtn=e.target.closest('.acc-act-edit');
-  const delBtn=e.target.closest('.acc-act-del');
-  if(!addBtn&&!editBtn&&!delBtn)return;
+  const archiveBtn=e.target.closest('.acc-act-archive');
+  if(!addBtn&&!editBtn&&!archiveBtn)return;
   closeAllSwipeRows('.acc-row');
   if(addBtn){selectAcc(parseInt(addBtn.dataset.idx,10));}
   else if(editBtn){editAccount(editBtn.dataset.id);}
-  else{deleteAccount(delBtn.dataset.id);}
+  else{archiveAccount(archiveBtn.dataset.id);}
 });
 
 async function showDayEvents(ds){
