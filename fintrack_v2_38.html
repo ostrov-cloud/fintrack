@@ -118,17 +118,19 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
 .acc-row-actions .acc-act-add{background:var(--gr2);}
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
-.ptr-indicator{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:9px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:height .18s ease,opacity .18s ease;pointer-events:none;opacity:0;box-shadow:0 8px 24px rgba(45,27,105,.18);}
+.ptr-indicator{--ptr-orange:#FFD3A3;--ptr-deg:0deg;position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:height .18s ease,opacity .18s ease;pointer-events:none;opacity:0;box-shadow:0 8px 24px rgba(45,27,105,.18);}
 .ptr-indicator.visible{opacity:1;}
 .ptr-indicator.refreshing{height:86px!important;opacity:1;}
 .ptr-brand{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;flex-shrink:0;}
-.ptr-spinner{width:22px;height:22px;border:2.5px solid rgba(255,255,255,.26);border-top-color:#fff;border-radius:50%;animation:ptr-spin .7s linear infinite;}
+.ptr-ring{width:36px;height:36px;border-radius:50%;background:conic-gradient(var(--ptr-orange) var(--ptr-deg),rgba(255,211,163,.22) 0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800;position:relative;flex-shrink:0;transition:transform .08s linear;box-shadow:0 0 16px rgba(255,211,163,.22);}
+.ptr-ring::before{content:"";position:absolute;inset:4px;border-radius:50%;background:rgba(26,16,64,.78);}
+.ptr-ring{line-height:1;}
+.ptr-ring>*{position:relative;z-index:1;}
+.ptr-spinner{width:30px;height:30px;border:3px solid rgba(255,211,163,.25);border-top-color:var(--ptr-orange);border-radius:50%;animation:ptr-spin .7s linear infinite;box-shadow:0 0 16px rgba(255,211,163,.25);}
 @keyframes ptr-spin{to{transform:rotate(360deg)}}
-.ptr-arrow{width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;transition:transform .08s linear;}
 .ptr-text-wrap{display:flex;flex-direction:column;line-height:1.15;}
 .ptr-text{color:#fff;font-size:12px;font-weight:700;letter-spacing:.03em;}
-.ptr-percent{color:rgba(255,255,255,.78);font-size:11px;font-weight:700;margin-top:3px;}
-.ptr-progress{position:absolute;left:0;bottom:0;height:3px;width:var(--ptr-progress,0%);background:rgba(255,255,255,.86);box-shadow:0 0 14px rgba(255,255,255,.45);}
+.ptr-percent{color:rgba(255,211,163,.95);font-size:11px;font-weight:800;margin-top:3px;}
 .content.ptr-content-lock{transform:translateY(86px);transition:transform .18s ease;}
 .hero-toggle-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);background:var(--card2);color:var(--txt3);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0;}
 .hero-toggle-btn:hover{border-color:var(--pu6);color:var(--pu6);}
@@ -462,12 +464,11 @@ tr:hover .del-row-btn{opacity:1;}
 <!-- PULL-TO-REFRESH INDICATOR -->
 <div class="ptr-indicator" id="ptrIndicator" aria-hidden="true">
   <div class="ptr-brand"><i class="ti ti-diamond"></i></div>
-  <div id="ptrIcon" class="ptr-arrow">↓</div>
+  <div id="ptrIcon" class="ptr-ring"><span>↓</span></div>
   <div class="ptr-text-wrap">
-    <span class="ptr-text" id="ptrText">Потягніть для оновлення</span>
+    <span class="ptr-text" id="ptrText">Потягніть на 30%</span>
     <span class="ptr-percent" id="ptrPercent">0%</span>
   </div>
-  <div class="ptr-progress" id="ptrProgress"></div>
 </div>
 
 <div class="shell">
@@ -760,7 +761,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.8</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.8 Demo</span>
     </div>
 
     <!-- Курси валют -->
@@ -3945,24 +3946,23 @@ function closeConfirm(){
    PULL-TO-REFRESH
 ═══════════════════════════════════════════ */
 (function initPTR(){
-  const THRESHOLD=96;
-  const MAX_PULL=118;
+  const MAX_PULL=128;
   const LOCK_HEIGHT=86;
   let startY=0,currentY=0,activeContent=null,isPulling=false,isRefreshing=false,hasTriggered=false;
   const ind=document.getElementById('ptrIndicator');
   const icon=document.getElementById('ptrIcon');
   const txt=document.getElementById('ptrText');
   const pctEl=document.getElementById('ptrPercent');
-  const bar=document.getElementById('ptrProgress');
 
   function scrollTopOf(el){
     return Math.max(el?.scrollTop||0,window.scrollY||0,document.documentElement.scrollTop||0,document.body.scrollTop||0);
   }
   function isVerticalPull(dy,dx){return dy>8&&dy>Math.abs(dx)*1.25;}
   function setHeight(px){ind.style.setProperty('--ptr-height',`${Math.max(0,px)}px`);}
+  function getThreshold(){return Math.max(150,Math.round(window.innerHeight*0.30));}
   function setProgress(pct){
     const safe=Math.max(0,Math.min(100,Math.round(pct)));
-    ind.style.setProperty('--ptr-progress',`${safe}%`);
+    ind.style.setProperty('--ptr-deg',`${safe*3.6}deg`);
     if(pctEl)pctEl.textContent=`${safe}%`;
   }
   function setSpinner(){
@@ -3980,8 +3980,8 @@ function closeConfirm(){
     ind.classList.remove('refreshing');
     setHeight(Math.min(MAX_PULL,Math.max(0,dy*.72)));
     setProgress(pct);
-    icon.className='ptr-arrow';
-    icon.textContent='↓';
+    icon.className='ptr-ring';
+    icon.innerHTML='<span>↓</span>';
     icon.style.transform=`rotate(${Math.min(pct*1.8,180)}deg)`;
     txt.textContent=pct>=100?'Оновлюємо...':'Потягніть для оновлення';
   }
@@ -3991,10 +3991,10 @@ function closeConfirm(){
       activeContent?.classList.remove('ptr-content-lock');
       setHeight(0);
       setProgress(0);
-      icon.className='ptr-arrow';
-      icon.textContent='↓';
+      icon.className='ptr-ring';
+      icon.innerHTML='<span>↓</span>';
       icon.style.transform='';
-      txt.textContent='Потягніть для оновлення';
+      txt.textContent='Потягніть на 30%';
       isPulling=false;
       isRefreshing=false;
       hasTriggered=false;
@@ -4057,7 +4057,7 @@ function closeConfirm(){
     const dx=t.clientX-(e.changedTouches?.[0]?.clientX||t.clientX);
     if(!isVerticalPull(dy,dx)){if(dy<=0)resetState();return;}
     if(scrollTopOf(activeContent)>0){resetState();return;}
-    const pct=Math.min(dy/THRESHOLD*100,100);
+    const pct=Math.min(dy/getThreshold()*100,100);
     setPullState(pct,dy);
     if(pct>=100)runRefresh();
   },{passive:true});
@@ -4069,7 +4069,7 @@ function closeConfirm(){
   document.addEventListener('touchend',()=>{
     if(!isPulling||isRefreshing)return;
     const dy=currentY-startY;
-    if(dy<THRESHOLD)resetState();
+    if(dy<getThreshold())resetState();
   },{passive:true});
 })();
 
