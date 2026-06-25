@@ -714,10 +714,13 @@ tr:hover .del-row-btn{opacity:1;}
           </div>
         </div>
       </div>
-      <div class="chart-legend">
-        <div class="leg-item"><div class="leg-line" style="background:var(--pu4)"></div>Загальний баланс (ліва вісь)</div>
-        <div class="leg-item"><div class="leg-line" style="background:var(--gr2)"></div>Чистий потік / міс (права вісь)</div>
-        <div class="leg-item"><div style="width:18px;border-top:2px dashed var(--txt3)"></div>Прогноз</div>
+      <div class="chart-legend" style="justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div class="leg-item"><div class="leg-line" style="background:var(--pu4)"></div>Загальний баланс (ліва вісь)</div>
+          <div class="leg-item"><div class="leg-line" style="background:var(--gr2)"></div>Чистий потік / міс (права вісь)</div>
+          <div class="leg-item"><div style="width:18px;border-top:2px dashed var(--txt3)"></div>Прогноз</div>
+        </div>
+        <button onclick="showAccountManagement()" style="background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;font-size:11px;color:var(--txt2);cursor:pointer;white-space:nowrap"><i class="ti ti-adjustments-horizontal"></i> Рахунки</button>
       </div>
       <div class="chart-wrap"><canvas id="r2Chart"></canvas></div>
       <div class="stat-grid stat-grid-3" style="margin-top:12px">
@@ -735,7 +738,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.6</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.7 demo</span>
     </div>
 
     <!-- Курси валют -->
@@ -1092,6 +1095,19 @@ tr:hover .del-row-btn{opacity:1;}
   </div>
 </div>
 
+<!-- MODAL: ACCOUNT MANAGEMENT -->
+<div class="modal-bg hidden" id="modalAccMgmt" style="z-index:500">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Управління рахунками <div class="close-x" onclick="closeModal('modalAccMgmt')">✕</div></div>
+    <p style="font-size:12px;color:var(--txt3);margin-bottom:12px">Відмічені рахунки враховуються в графіках Звітів</p>
+    <div id="accMgmtList" style="display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto"></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="closeModal('modalAccMgmt')" style="flex:1">Закрити</button>
+      <button class="btn btn-primary" onclick="saveChartAccounts()" style="flex:1">Зберегти</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: PAGE HELP -->
 <div class="modal-bg hidden" id="modalPageHelp" style="z-index:500">
   <div class="modal" style="max-width:420px;max-height:80vh;overflow-y:auto">
@@ -1274,11 +1290,14 @@ let assetMonth={year:new Date().getFullYear(), month:new Date().getMonth()};
 ══════════════════════════════════════════ */
 function ensureST(){
   ['transactions','assets','events'].forEach(k=>{if(!ST[k]||!Array.isArray(ST[k]))ST[k]=[];});
+  if(!ST.accounts||!Array.isArray(ST.accounts))ST.accounts=[];
+  ST.accounts.forEach(a=>{if(a.archived===undefined)a.archived=false;});
   if(!ST.categories||!ST.categories.expense||!ST.categories.income){
     ST.categories={expense:['🛒 Продукти','🏠 Житло','🚗 Транспорт','💊 Здоров\'я','🎬 Розваги','👗 Одяг','📚 Освіта','✈️ Подорожі','📦 Інше'],
                    income:['💼 Зарплата','💰 Фріланс','📈 Інвестиції','🏠 Оренда','🎁 Подарунок','💵 Інше']};
   }
   if(!ST.exchangeRates)ST.exchangeRates={};
+  if(!ST.balanceSnapshots)ST.balanceSnapshots={};
 }
 
 // Завантаження даних і legacy-міграція при старті
@@ -1622,7 +1641,7 @@ function _showMainApp(){
   updateUserIndicator();
   const now=new Date();calY=now.getFullYear();calM=now.getMonth();
   lastSnapshot=JSON.stringify(ST);
-  processRecurringEvents();refreshAll();syncCategorySelects();loadSettingsRates();refreshCalendarRates();
+  processRecurringEvents();reconstructSnapshots();recordMonthlySnapshot();refreshAll();syncCategorySelects();loadSettingsRates();refreshCalendarRates();
 }
 
 async function showAuthScreen(){
@@ -1907,11 +1926,23 @@ const PAGE_HELP={
 <br><br>
 ↔️ <b>Свайп вліво</b> на події — Редагувати / Видалити.`,
 
-  reports:`<b>Звіти</b> — аналіз фінансів за різні періоди.
+  reports:`<b>Звіти</b> — аналіз і прогноз фінансів.
 <br><br>
-📊 Графіки доходів і витрат по місяцях.
+<b>📈 Баланс у часі</b><br>
+Показує як змінюється загальний баланс з урахуванням регулярних подій з Календаря. Пунктир — прогноз.<br>
+• <b>Номінальний баланс</b> (фіолетова лінія) — просте підсумовування: поточний баланс + очікуваний потік від подій щомісяця.<br>
+• <b>Реальна вартість</b> (помаранчева лінія) — той самий баланс але знецінений на вказаний % інфляції на рік. Показує скільки ці гроші коштуватимуть реально.<br>
+• <b>Фільтр</b> — враховувати тільки рахунки, або рахунки + активи.<br>
+• <b>Початковий баланс</b> — якщо хочеш змоделювати "що якби я почав з X грн".<br>
+• <b>Місячний потік</b> — якщо хочеш задати фіксований потік вручну замість автоматичного з подій.
 <br><br>
-📥 <b>Експорт CSV</b> — вивантажити всі транзакції в таблицю.`,
+<b>📊 Баланс та чистий потік</b><br>
+Два графіки на одній осі: баланс (ліворуч) та місячний потік (праворуч).<br>
+• <b>Ліворуч від "сьогодні"</b> — реальні історичні дані з транзакцій. Баланс відповідає показнику на головному екрані (враховує виключені рахунки). Потік — фактичний дохід мінус витрати за кожен місяць.<br>
+• <b>Праворуч</b> — прогноз на основі регулярних подій з Календаря.<br>
+• <b>Потік зараз</b> — реальний чистий потік поточного місяця.<br>
+• <b>Потік через 1 рік</b> — очікуваний потік виходячи з запланованих подій.<br>
+• <b>Ріст балансу</b> — на скільки зміниться баланс за обраний горизонт прогнозу.`,
 
   settings:`<b>Налаштування</b>
 <br><br>
@@ -1965,16 +1996,29 @@ function editAccount(id){
 }
 
 function deleteAccount(id){
-  showConfirm('Видалити цей рахунок? Всі транзакції та події також будуть видалені.',()=>{
+  showConfirm('Архівувати цей рахунок? Він зникне з головного екрану, але його історія збережеться для графіків.',()=>{
+    const acc=ST.accounts.find(a=>a.id===id);
+    if(acc){
+      acc.archived=true;
+      ST.events=ST.events.filter(e=>e.accId!==id);
+      ST.assets.forEach(a=>{if(a.linkedAccId===id)a.linkedAccId='';});
+      if(ST.selAcc!==null){
+        const activeIdx=ST.accounts.filter(a=>!a.archived).findIndex(a=>a.id===id);
+        if(activeIdx>=0)ST.selAcc=null;
+      }
+    }
+    saveST();refreshAll();toast('Рахунок архівовано');
+  });
+}
+
+function permanentlyDeleteAccount(id){
+  showConfirm('⚠️ Повністю видалити рахунок і всі його дані? Це незворотно.',()=>{
     ST.accounts=ST.accounts.filter(a=>a.id!==id);
     ST.transactions=ST.transactions.filter(t=>t.accId!==id);
     ST.events=ST.events.filter(e=>e.accId!==id);
     ST.assets.forEach(a=>{if(a.linkedAccId===id)a.linkedAccId='';});
-    if(ST.selAcc!==null){
-      const idx=ST.accounts.findIndex(a=>a.id===id);
-      if(idx===ST.selAcc)ST.selAcc=null;
-    }
-    saveST();refreshAll();toast('Рахунок видалено');
+    delete ST.balanceSnapshots[id];
+    saveST();refreshAll();renderAccountManagementModal();toast('Рахунок видалено назавжди');
   });
 }
 function buildIconPicker(gridId, selectedIcon){
@@ -2122,7 +2166,68 @@ function syncAccSelects(){
   syncCategorySelects();
 }
 
-function getHeroExcluded(){
+function renderAccountManagementModal(){
+  const chartAccs=getChartAccounts();
+  const active=ST.accounts.filter(a=>!a.archived);
+  const archived=ST.accounts.filter(a=>a.archived);
+  let html='';
+  if(active.length){
+    html+=`<div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Активні</div>`;
+    html+=active.map(a=>`
+      <div style="display:flex;align-items:center;gap:10px;background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px">
+        <input type="checkbox" id="chk_${a.id}" ${chartAccs.has(a.id)?'checked':''} style="width:16px;height:16px;accent-color:var(--pu6);flex-shrink:0"/>
+        <div class="tbl-ico" style="background:${a.color}22;color:${a.color};width:28px;height:28px;font-size:14px;flex-shrink:0">${renderIcon(a.icon||a.emoji)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500">${stripIconPrefix(a.name)}</div>
+          <div style="font-size:11px;color:var(--txt3)">${a.currency} · ${fmt(a.balance,a.currency)}</div>
+        </div>
+      </div>`).join('');
+  }
+  if(archived.length){
+    html+=`<div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin:10px 0 4px">Архівовані</div>`;
+    html+=archived.map(a=>`
+      <div style="display:flex;align-items:center;gap:10px;background:var(--card2);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;opacity:.8">
+        <input type="checkbox" id="chk_${a.id}" ${chartAccs.has(a.id)?'checked':''} style="width:16px;height:16px;accent-color:var(--pu6);flex-shrink:0"/>
+        <div class="tbl-ico" style="background:${a.color}22;color:${a.color};width:28px;height:28px;font-size:14px;flex-shrink:0">${renderIcon(a.icon||a.emoji)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--txt2)">${stripIconPrefix(a.name)}</div>
+          <div style="font-size:11px;color:var(--txt3)">${a.currency} · архів</div>
+        </div>
+        <button onclick="permanentlyDeleteAccount('${a.id}')" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0" title="Видалити назавжди"><i class="ti ti-trash"></i></button>
+      </div>`).join('');
+  }
+  document.getElementById('accMgmtList').innerHTML=html||'<div style="color:var(--txt3);text-align:center;padding:20px">Рахунків ще немає</div>';
+}
+
+function showAccountManagement(){
+  reconstructSnapshots();
+  recordMonthlySnapshot();
+  renderAccountManagementModal();
+  openModal('modalAccMgmt');
+}
+
+function saveChartAccounts(){
+  const set=new Set();
+  ST.accounts.forEach(a=>{
+    const chk=document.getElementById('chk_'+a.id);
+    if(chk&&chk.checked)set.add(a.id);
+  });
+  setChartAccounts(set);
+  closeModal('modalAccMgmt');
+  renderReport2();
+  toast('Налаштування збережено');
+}
+
+function getChartAccountsForRender(){
+  // Автоматично додаємо нові рахунки якщо ще не в налаштуваннях
+  const saved=localStorage.getItem('ft3_chart_acc');
+  if(!saved)return new Set(ST.accounts.filter(a=>!a.archived).map(a=>a.id));
+  const set=getChartAccounts();
+  ST.accounts.filter(a=>!a.archived).forEach(a=>{
+    if(!set.has(a.id))set.add(a.id); // нові рахунки включаємо автоматично
+  });
+  return set;
+}
   try{return new Set(JSON.parse(localStorage.getItem('ft3_hero_excluded')||'[]'));}
   catch(e){return new Set();}
 }
@@ -2136,9 +2241,100 @@ function toggleHeroExclude(e,accId){
   setHeroExcluded(excl);
   renderAccounts();
 }
+/* ═══════════════════════════════════════════
+   BALANCE SNAPSHOTS
+═══════════════════════════════════════════ */
+function getRateForMonth(mk, cur){
+  if(cur==='UAH')return 1;
+  // Шукаємо будь-який курс за цей місяць
+  const dates=Object.keys(ST.exchangeRates).filter(d=>d.startsWith(mk)&&ST.exchangeRates[d][cur]>0&&!isNaN(ST.exchangeRates[d][cur]));
+  if(dates.length)return ST.exchangeRates[dates[0]][cur];
+  // Шукаємо найближчий попередній місяць
+  const allDates=Object.keys(ST.exchangeRates).sort();
+  for(let i=allDates.length-1;i>=0;i--){
+    if(allDates[i]<mk+'~'&&ST.exchangeRates[allDates[i]][cur]>0)return ST.exchangeRates[allDates[i]][cur];
+  }
+  return null;
+}
+
+function recordMonthlySnapshot(){
+  const mk=monthKey(today());
+  ST.accounts.forEach(acc=>{
+    if(!ST.balanceSnapshots[acc.id])ST.balanceSnapshots[acc.id]={};
+    const rate=getRateForMonth(mk,acc.currency);
+    if(rate===null)return; // немає курсу — пропускаємо
+    // Баланс в UAH
+    const balUAH=acc.balance*rate;
+    // Потік за місяць в UAH
+    const txns=ST.transactions.filter(t=>t.accId===acc.id&&monthKey(t.date)===mk&&t.cat!=='💰 Старт'&&t.cat!=='⚙️ Система');
+    const flowUAH=txns.reduce((s,t)=>s+t.amount*rate,0);
+    ST.balanceSnapshots[acc.id][mk]={bal:Math.round(balUAH),flow:Math.round(flowUAH)};
+  });
+}
+
+function reconstructSnapshots(){
+  // Будуємо знімки за минулі місяці з транзакцій (одноразово при першому запуску)
+  const months=new Set();
+  ST.transactions.forEach(t=>{if(t.date)months.add(monthKey(t.date));});
+  months.forEach(mk=>{
+    ST.accounts.forEach(acc=>{
+      if(ST.balanceSnapshots[acc.id]&&ST.balanceSnapshots[acc.id][mk])return; // вже є
+      const rate=getRateForMonth(mk,acc.currency);
+      if(rate===null)return;
+      const txns=ST.transactions.filter(t=>t.accId===acc.id&&monthKey(t.date)===mk&&t.cat!=='💰 Старт'&&t.cat!=='⚙️ Система');
+      if(!txns.length)return;
+      const flowUAH=txns.reduce((s,t)=>s+t.amount*rate,0);
+      if(!ST.balanceSnapshots[acc.id])ST.balanceSnapshots[acc.id]={};
+      // Баланс реконструюємо приблизно: поточний баланс відматаний назад
+      // (точне значення буде тільки у записаних знімках)
+      if(!ST.balanceSnapshots[acc.id][mk])ST.balanceSnapshots[acc.id][mk]={bal:null,flow:Math.round(flowUAH)};
+    });
+  });
+  // Реконструюємо баланс відматуванням назад від поточного
+  ST.accounts.forEach(acc=>{
+    const rate=getRateForMonth(monthKey(today()),acc.currency)||1;
+    let runBal=Math.round(acc.balance*rate);
+    const mks=Object.keys(ST.balanceSnapshots[acc.id]||{}).sort().reverse();
+    mks.forEach(mk=>{
+      if(ST.balanceSnapshots[acc.id][mk].bal===null){
+        ST.balanceSnapshots[acc.id][mk].bal=runBal;
+      }
+      runBal-=(ST.balanceSnapshots[acc.id][mk].flow||0);
+    });
+  });
+}
+
+// localStorage: які рахунки включені в графіки
+function getChartAccounts(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('ft3_chart_acc')||'null');
+    if(saved)return new Set(saved);
+  }catch(e){}
+  // За замовчуванням — всі не архівовані
+  return new Set(ST.accounts.filter(a=>!a.archived).map(a=>a.id));
+}
+function setChartAccounts(set){localStorage.setItem('ft3_chart_acc',JSON.stringify([...set]));}
+
+function getSnapshotMonths(){
+  const months=new Set();
+  Object.values(ST.balanceSnapshots).forEach(accData=>Object.keys(accData).forEach(mk=>months.add(mk)));
+  return [...months].sort();
+}
+
+function getSnapshotTotal(mk,chartAccs){
+  let bal=0,flow=0,hasData=false;
+  chartAccs.forEach(accId=>{
+    const snap=ST.balanceSnapshots[accId]&&ST.balanceSnapshots[accId][mk];
+    if(snap){
+      if(snap.bal!==null&&snap.bal!==undefined){bal+=snap.bal;hasData=true;}
+      flow+=snap.flow||0;
+    }
+  });
+  return hasData?{bal,flow}:null;
+}
+
 function syncCategorySelects(){
-  // категорії операцій прибрано — функція лишена як no-op,
-  // щоб не чіпати всі виклики по коду
+  // категорії операцій прибрано — функція лишена як no-op
 }
 function insertCheckmark(id){
   const ta=document.getElementById(id);
@@ -3345,32 +3541,63 @@ function renderReport1(){
 }
 
 function renderReport2(){
-  const pastM=6;const total=pastM+r2H;const todayIdx=pastM;
-  const labels=[],balData=[],flowData=[];
-  let bal=ST.accounts.filter(a=>a.currency==='UAH').reduce((s,a)=>s+a.balance,0);
-  ST.assets.filter(a=>a.currency==='UAH').forEach(a=>bal+=a.value);
-  for(let m=0;m<=total;m++){
-    const mo=m-pastM;
-    const d=new Date();d.setMonth(d.getMonth()+mo);
-    labels.push(MONTHS_S[d.getMonth()]+" '"+String(d.getFullYear()).slice(2));
-    const flow=getMonthlyNetFromEvents(mo);
-    if(m>0)bal+=flow;
-    balData.push(Math.round(bal));flowData.push(flow);
+  reconstructSnapshots();
+  recordMonthlySnapshot();
+  const chartAccs=getChartAccountsForRender();
+  const curMk=monthKey(today());
+  const allMonths=getSnapshotMonths();
+
+  // Минулі місяці з знімків
+  const pastMonths=allMonths.filter(mk=>mk<=curMk);
+  // Майбутні: 12 місяців вперед
+  const futureMonths=[];
+  for(let i=1;i<=12;i++){
+    const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+i);
+    futureMonths.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
   }
+  const allLabels=[...pastMonths,...futureMonths];
+  const todayIdx=pastMonths.length-1;
+
+  const labels=[],balData=[],flowData=[];
+  let lastKnownBal=null;
+
+  allLabels.forEach((mk,i)=>{
+    const d=new Date(mk+'-01');
+    labels.push(MONTHS_S[d.getMonth()]+" '"+String(d.getFullYear()).slice(2));
+    if(i<=todayIdx){
+      const snap=getSnapshotTotal(mk,chartAccs);
+      if(snap){lastKnownBal=snap.bal;}
+      balData.push(snap?snap.bal:null);
+      flowData.push(snap?snap.flow:null);
+    }else{
+      // Прогноз з подій Календаря
+      const mo=i-todayIdx;
+      const f=getMonthlyNetFromEvents(mo);
+      lastKnownBal=(lastKnownBal||0)+f;
+      balData.push(Math.round(lastKnownBal));
+      flowData.push(Math.round(f));
+    }
+  });
+
   const bS=balData.map((v,i)=>i<=todayIdx?v:null);
   const bD=balData.map((v,i)=>i>=todayIdx?v:null);
   const fS=flowData.map((v,i)=>i<=todayIdx?v:null);
   const fD=flowData.map((v,i)=>i>=todayIdx?v:null);
-  document.getElementById('r2CurFlow').textContent=fmtSign(flowData[todayIdx],'UAH');
-  document.getElementById('r2ProjFlow').textContent=fmtSign(flowData[Math.min(todayIdx+12,flowData.length-1)],'UAH');
-  document.getElementById('r2Growth').textContent=fmtSign(balData[balData.length-1]-balData[todayIdx],'UAH');
+
+  const curFlow=flowData[todayIdx]||0;
+  const projFlow=flowData[flowData.length-1]||0;
+  const growth=(balData[balData.length-1]||0)-(balData[todayIdx]||0);
+  document.getElementById('r2CurFlow').textContent=fmtSign(curFlow,'UAH');
+  document.getElementById('r2ProjFlow').textContent=fmtSign(projFlow,'UAH');
+  document.getElementById('r2Growth').textContent=fmtSign(growth,'UAH');
+
   if(charts.r2)charts.r2.destroy();
   charts.r2=new Chart(document.getElementById('r2Chart'),{type:'line',plugins:[todayLinePlugin(todayIdx)],
     data:{labels,datasets:[
-      {data:bS,borderColor:'#534AB7',backgroundColor:'rgba(83,74,183,.07)',tension:.4,fill:true,pointRadius:0,borderWidth:2,spanGaps:false,yAxisID:'yBal'},
-      {data:bD,borderColor:'#534AB7',backgroundColor:'transparent',tension:.4,fill:false,pointRadius:0,borderWidth:2,borderDash:[6,4],spanGaps:false,yAxisID:'yBal'},
-      {data:fS,borderColor:'#5DCAA5',backgroundColor:'transparent',tension:.3,fill:false,pointRadius:0,borderWidth:2,spanGaps:false,yAxisID:'yFlow'},
-      {data:fD,borderColor:'#5DCAA5',backgroundColor:'transparent',tension:.3,fill:false,pointRadius:0,borderWidth:2,borderDash:[6,4],spanGaps:false,yAxisID:'yFlow'},
+      {data:bS,borderColor:'#534AB7',backgroundColor:'rgba(83,74,183,.07)',tension:.4,fill:true,pointRadius:0,borderWidth:2,spanGaps:true,yAxisID:'yBal'},
+      {data:bD,borderColor:'#534AB7',backgroundColor:'transparent',tension:.4,fill:false,pointRadius:0,borderWidth:2,borderDash:[6,4],spanGaps:true,yAxisID:'yBal'},
+      {data:fS,borderColor:'#5DCAA5',backgroundColor:'transparent',tension:.3,fill:false,pointRadius:3,borderWidth:2,spanGaps:false,yAxisID:'yFlow'},
+      {data:fD,borderColor:'#5DCAA5',backgroundColor:'transparent',tension:.3,fill:false,pointRadius:0,borderWidth:2,borderDash:[6,4],spanGaps:true,yAxisID:'yFlow'},
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>{
@@ -3378,11 +3605,12 @@ function renderReport2(){
         return 'Потік: '+(c.raw>=0?'+':'')+fmt(c.raw,'UAH')+'/міс';
       }}}},
       scales:{
-        x:{ticks:{color:'#9080b8',font:{size:10},maxTicksLimit:10,maxRotation:0},grid:{color:'rgba(0,0,0,.06)'}},
+        x:{ticks:{color:'#9080b8',font:{size:10},maxTicksLimit:12,maxRotation:0},grid:{color:'rgba(0,0,0,.06)'}},
         yBal:{position:'left',ticks:{color:'#6D5AE6',font:{size:10},callback:v=>fmt(v,'UAH')},grid:{color:'rgba(0,0,0,.06)'}},
         yFlow:{position:'right',ticks:{color:'#10A870',font:{size:10},callback:v=>(v>=0?'+':'')+fmt(v,'UAH')},grid:{display:false}},
       }}});
 }
+
 
 function setR1H(m,btn){r1H=m;btn.closest('.seg').querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderReport1();}
 function setR2H(m,btn){r2H=m;btn.closest('.seg').querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderReport2();}
