@@ -120,7 +120,7 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
 .ptr-indicator{--ptr-orange:#FFD3A3;--ptr-deg:0deg;position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;height:var(--ptr-height,0px);min-height:0;overflow:hidden;background:linear-gradient(135deg,#1a1040 0%,#4b2d8a 55%,#C44A1D 100%);z-index:200;transition:opacity .12s ease;pointer-events:none;opacity:0;will-change:height,opacity;box-shadow:0 8px 24px rgba(45,27,105,.18);}
 .ptr-indicator.visible{opacity:1;}
-.ptr-indicator.refreshing{height:86px!important;opacity:1;}
+.ptr-indicator.refreshing{opacity:1;}
 .ptr-brand{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;flex-shrink:0;}
 .ptr-ring{width:36px;height:36px;border-radius:50%;background:conic-gradient(var(--ptr-orange) var(--ptr-deg),rgba(255,211,163,.22) 0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800;position:relative;flex-shrink:0;transition:transform .08s linear;box-shadow:0 0 16px rgba(255,211,163,.22);}
 .ptr-ring::before{content:"";position:absolute;inset:4px;border-radius:50%;background:rgba(26,16,64,.78);}
@@ -131,7 +131,7 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .ptr-text-wrap{display:flex;flex-direction:column;line-height:1.15;}
 .ptr-text{color:#fff;font-size:12px;font-weight:700;letter-spacing:.03em;}
 .ptr-percent{color:rgba(255,211,163,.95);font-size:11px;font-weight:800;margin-top:3px;}
-.content.ptr-content-lock{transform:translateY(86px);transition:transform .18s ease;}
+.content.ptr-content-lock{transition:transform .18s ease;}
 .content.ptr-content-pulling{will-change:transform;}
 .hero-toggle-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);background:var(--card2);color:var(--txt3);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0;}
 .hero-toggle-btn:hover{border-color:var(--pu6);color:var(--pu6);}
@@ -506,7 +506,7 @@ tr:hover .del-row-btn{opacity:1;}
     <button class="bnav-btn" onclick="showScreen('calendar',this)" aria-label="Календар">
       <i class="ti ti-calendar"></i><span>Календар</span>
     </button>
-    <button class="bnav-btn" onclick="showScreen('reports',this)" aria-label="Звіти">
+    <button class="bnav-btn" onclick="showScreen('reports',this)" aria-label="Зв��ти">
       <i class="ti ti-chart-line"></i><span>Звіти</span>
     </button>
     <button class="bnav-btn" onclick="showScreen('settings',this)" aria-label="Налаштування">
@@ -762,7 +762,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.8 Demo2</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.9</span>
     </div>
 
     <!-- Курси валют -->
@@ -1924,6 +1924,8 @@ const PAGE_HELP={
 ➕ <b>Додати операцію</b> — натисни на рахунок або кнопку + внизу. В модалці вкладки: Витрата / Дохід / Переказ. Поле Опис підтримує список покупок — кнопка ✓ вставляє галочку.
 <br><br>
 ↔️ <b>Свайп вліво</b> на рахунку — кнопки Додати / Редагувати / Видалити.
+<br><br>
+⬇️ <b>Свайп вниз</b> зверху сторінки — Pull-to-Refresh. Потягни екран вниз приблизно на 30% висоти телефона, доки кругова шкала не дійде до 100%. Після цього запуститься оновлення даних.
 <br><br>
 ↩️ <b>Відмінити дію</b> — оранжева кнопка зліва внизу, зберігає до 20 кроків назад.`,
 
@@ -3947,8 +3949,7 @@ function closeConfirm(){
    PULL-TO-REFRESH
 ═══════════════════════════════════════════ */
 (function initPTR(){
-  const MAX_PULL=128;
-  const LOCK_HEIGHT=86;
+  const MAX_PULL=()=>getThreshold();
   let startY=0,currentY=0,activeContent=null,isPulling=false,isRefreshing=false,hasTriggered=false;
   const ind=document.getElementById('ptrIndicator');
   const icon=document.getElementById('ptrIcon');
@@ -3968,7 +3969,8 @@ function closeConfirm(){
   }
   function setSpinner(){
     ind.classList.add('refreshing','visible');
-    setHeight(LOCK_HEIGHT);
+    const lockH=getThreshold();
+    setHeight(lockH);
     setProgress(100);
     icon.className='ptr-spinner';
     icon.textContent='';
@@ -3977,14 +3979,15 @@ function closeConfirm(){
     if(activeContent){
       activeContent.classList.remove('ptr-content-pulling');
       activeContent.style.transition='transform .18s ease';
-      activeContent.style.transform='translateY('+LOCK_HEIGHT+'px)';
+      activeContent.style.transform='translateY('+lockH+'px)';
       activeContent.classList.add('ptr-content-lock');
     }
   }
   function setPullState(pct,dy){
     ind.classList.add('visible');
     ind.classList.remove('refreshing');
-    setHeight(Math.min(MAX_PULL,Math.max(0,dy*.72)));
+    const pullH=Math.min(MAX_PULL(),Math.max(0,dy));
+    setHeight(pullH);
     setProgress(pct);
     icon.className='ptr-ring';
     icon.innerHTML='<span></span>';
@@ -4079,7 +4082,7 @@ function closeConfirm(){
     if(scrollTopOf(activeContent)>0){resetState();return;}
     if(activeContent){
       activeContent.style.transition='none';
-      activeContent.style.transform=`translateY(${Math.min(MAX_PULL,dy*.38)}px)`;
+      activeContent.style.transform=`translateY(${Math.min(MAX_PULL(),dy)}px)`;
     }
     if(!isVerticalPull(dy,dx) && dy<12)return;
     const pct=Math.min(dy/getThreshold()*100,100);
