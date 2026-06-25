@@ -296,8 +296,19 @@ tr:hover .del-row-btn{opacity:1;}
 .modal-bg.hidden{display:none;}
 .modal{background:var(--card);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.12);}
 .modal.day-events-modal{max-width:420px;height:min(78vh,620px);min-height:520px;display:flex;flex-direction:column;overflow:hidden!important;}
-#modalDayEvents #dayEvList{flex:1 1 auto;min-height:0!important;max-height:none!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-bottom:10px;padding-right:2px;touch-action:pan-y;}
+#modalDayEvents #dayEvList{flex:1 1 auto;min-height:0!important;max-height:55vh!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-bottom:10px;padding-right:0;touch-action:pan-y;}
 #modalDayEvents .day-events-add{position:sticky;bottom:0;z-index:2;width:100%;margin-bottom:6px;flex:0 0 auto;}
+#modalDayEvents .dayev-list-head{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:10px;padding:9px 12px;background:var(--card2);border:0.5px solid var(--border);border-bottom:none;border-radius:var(--r-sm) var(--r-sm) 0 0;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;flex:0 0 auto;}
+#modalDayEvents #dayEvList{border:0.5px solid var(--border);border-radius:0 0 var(--r-sm) var(--r-sm);background:var(--card);gap:0;}
+#modalDayEvents .dayev-row-wrap{border-bottom:0.5px solid var(--border);border-radius:0;min-height:54px;}
+#modalDayEvents .dayev-row-wrap:last-child{border-bottom:none;}
+#modalDayEvents .dayev-op-row{display:grid!important;grid-template-columns:34px minmax(0,1fr) 96px;align-items:center;gap:10px;padding:9px 12px!important;background:var(--card);}
+#modalDayEvents .dayev-main{min-width:0;}
+#modalDayEvents .dayev-name{font-size:13px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#modalDayEvents .dayev-meta{font-size:11px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+#modalDayEvents .dayev-amount{text-align:right;font-size:13px;font-weight:700;white-space:nowrap;}
+#modalDayEvents .dayev-amount.pos{color:var(--gr);}
+#modalDayEvents .dayev-amount.neg{color:var(--or4);}
 .modal-title{font-size:16px;font-weight:600;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;color:var(--txt);}
 .close-x{background:var(--card2);border:0.5px solid var(--border);border-radius:50%;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--txt2);}
 .close-x:hover{background:var(--bg3);}
@@ -782,7 +793,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.7</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.67</span>
     </div>
 
     <!-- Курси валют -->
@@ -1181,6 +1192,7 @@ tr:hover .del-row-btn{opacity:1;}
       <span style="color:var(--txt3)">Курси валют</span>
       <div id="dayEvRatesBody" style="margin-top:6px;display:flex;gap:16px"></div>
     </div>
+    <div class="dayev-list-head"><span>Операція / рахунок</span><span style="text-align:right">Сума</span></div>
     <div id="dayEvList" class="txn-list"></div>
     <button class="btn btn-primary day-events-add" id="dayEvAddBtn" onclick="addEventForDay()">+ Нова подія</button>
   </div>
@@ -1972,7 +1984,7 @@ const PAGE_HELP={
 <br><br>
 💳 <b>Рахунки справа</b> — суми тільки по рахунках що не мають прив'язаних активів, згруповані по валютах.
 <br><br>
-➕ <b>Додати операцію</b> — натисни на рахунок або кнопку + внизу. В модалці вкладки: Витрата / Дохід / Переказ. Поле Опис підтримує список покупок — кнопка ✓ вставляє галочку.
+➕ <b>Додати операцію</b> — натисни на рахун��к або кнопку + внизу. В модалці вкладки: Витрата / Дохід / Переказ. Поле Опис підтримує список покупок — кнопка ✓ вставляє галочку.
 <br><br>
 ↔️ <b>Свайп вліво</b> на рахунку — кнопки Додати / Редагувати / Архівувати / Видалити.
 <br><br>
@@ -2001,7 +2013,7 @@ const PAGE_HELP={
 <br><br>
 📅 <b>Натисни на день</b> — побачиш всі події та операції цього дня. Звідси можна редагувати або видаляти.
 <br><br>
-🔁 <b>Повторення</b> — подія може бути одноразовою, щотижневою або щомісячною. Щотижневі операції автоматично конвертуються по курсу НБУ на дату.
+🔁 <b>Повторення</b> — подія може бути одноразовою, щотижневою або щомісячною. Щотижневі операції автоматично конвертуються по курсу НБУ ��а дату.
 <br><br>
 📋 <b>Найближчі 45 днів</b> — список запланованих подій що ще не виконані. Якщо подія вже записана як транзакція — вона зникає зі списку.
 <br><br>
@@ -2577,7 +2589,7 @@ async function doTransfer(){
 
 /* ═══════════════════════════════════════════
    ASSETS
-═════════���═════════════════════════════════ */
+══���══════���═════════════════════════════════ */
 function openAddAsset(){
   document.getElementById('mAsEditId').value='';
   document.getElementById('modalAssetTitle').textContent='Актив / Борг';
@@ -3505,10 +3517,10 @@ async function showDayEvents(ds){
           <button class="dayev-edit" data-id="${e.id}" data-src="${e.source}" title="Редагувати"><i class="ti ti-pencil"></i></button>
           <button class="dayev-del" data-id="${e.id}" data-src="${e.source}" title="Видалити"><i class="ti ti-trash"></i></button>
         </div>
-        <div class="dayev-row-content txn-row" style="padding:6px 2px">
+        <div class="dayev-row-content dayev-op-row">
           <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(e.icon||'ti-calendar')}</div>
-          <div class="txn-info"><div class="txn-desc">${e.name}</div><div class="txn-meta">${e.cat||''}${e.accName?' · '+e.accName:''}${isEvent&&e.repeat!=='once'?' · '+REP_LABELS[e.repeat]:''}</div></div>
-          <div class="txn-amt ${pos?'pos':'neg'}">${pos?'+':'-'}${fmt(e.amount,e.currency||e.accCur||'UAH')}</div>
+          <div class="dayev-main"><div class="dayev-name">${e.name}</div><div class="dayev-meta">${e.cat||''}${e.accName?' · '+e.accName:''}${isEvent&&e.repeat!=='once'?' · '+REP_LABELS[e.repeat]:''}</div></div>
+          <div class="dayev-amount ${pos?'pos':'neg'}">${pos?'+':'-'}${fmt(e.amount,e.currency||e.accCur||'UAH')}</div>
         </div>
       </div>`;
     }).join('');
@@ -4338,7 +4350,7 @@ function confirmClearCache(){
 }
 
 function confirmDeleteUserAccount(){
-  showConfirm('⚠️ Видалити акаунт назавжди? Всі дані буде знищено без можливості відновлення.',async()=>{
+  showConfirm('⚠️ Видалити акау��т назавжди? Всі дані буде знищено без можливості відновлення.',async()=>{
     const result=await Users.deleteAccount();
     if(result.ok){
       toast('Акаунт видалено');
