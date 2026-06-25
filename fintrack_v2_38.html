@@ -118,7 +118,12 @@ html,body{height:100%;background:linear-gradient(180deg,#f3eefb 0%,#fdf3ec 100%)
 .acc-row-actions button{width:54px;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0;}
 .acc-row-actions .acc-act-add{background:var(--gr2);}
 .acc-row-actions .acc-act-edit{background:var(--pu6);}
-.acc-row-actions .acc-act-del{background:var(--red);}
+.ptr-indicator{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;height:0;overflow:hidden;background:var(--pu6);z-index:200;transition:height .2s ease;pointer-events:none;}
+.ptr-indicator.visible{height:52px;}
+.ptr-spinner{width:22px;height:22px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:ptr-spin .7s linear infinite;}
+@keyframes ptr-spin{to{transform:rotate(360deg)}}
+.ptr-arrow{width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;transition:transform .2s;}
+.ptr-text{color:#fff;font-size:12px;font-weight:600;margin-left:8px;letter-spacing:.03em;}
 .hero-toggle-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);background:var(--card2);color:var(--txt3);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0;}
 .hero-toggle-btn:hover{border-color:var(--pu6);color:var(--pu6);}
 .hero-toggle-btn.excluded{background:var(--pu6);border-color:var(--pu6);color:#fff;opacity:.7;}
@@ -448,6 +453,12 @@ tr:hover .del-row-btn{opacity:1;}
   <div class="load-spinner"></div>
 </div>
 
+<!-- PULL-TO-REFRESH INDICATOR -->
+<div class="ptr-indicator" id="ptrIndicator">
+  <div id="ptrIcon" class="ptr-arrow">↓</div>
+  <span class="ptr-text" id="ptrText">Потягніть для оновлення</span>
+</div>
+
 <div class="shell">
 <!-- SIDEBAR -->
 <nav class="sidebar" role="navigation" aria-label="Головне меню">
@@ -738,7 +749,7 @@ tr:hover .del-row-btn{opacity:1;}
     <!-- Версія додатку -->
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:4px 0">
       <span style="font-size:11px;color:var(--txt3);">FinTrack</span>
-      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.7 demo</span>
+      <span style="font-size:12px;font-weight:600;color:var(--pu6);">v2.6.7</span>
     </div>
 
     <!-- Курси валют -->
@@ -2115,9 +2126,9 @@ function renderAccounts(){
   document.getElementById('heroAmount').textContent=fmt(totalUAH,'UAH');
   document.getElementById('heroSub').textContent=ST.accounts.length+' рахунк'+(ST.accounts.length===1?'ок':ST.accounts.length<5?'и':'ів')+(excluded.size?` · ${excluded.size} виключено`:'');
 
-  // Правий стовпець — тільки рахунки без прив'язаних активів
+  // Правий стовпець — всі не-архівовані рахунки, враховуємо кнопку 👁
   const breakdown=document.getElementById('heroCurBreakdown');
-  const sideAccs=ST.accounts.filter(a=>!linkedAccIds.has(a.id));
+  const sideAccs=ST.accounts.filter(a=>!a.archived&&!excluded.has(a.id));
   const sUAH=sideAccs.filter(a=>a.currency==='UAH').reduce((s,a)=>s+a.balance,0);
   const sUSD=sideAccs.filter(a=>a.currency==='USD').reduce((s,a)=>s+a.balance,0);
   const sEUR=sideAccs.filter(a=>a.currency==='EUR').reduce((s,a)=>s+a.balance,0);
@@ -2228,6 +2239,7 @@ function getChartAccountsForRender(){
   });
   return set;
 }
+function getHeroExcluded(){
   try{return new Set(JSON.parse(localStorage.getItem('ft3_hero_excluded')||'[]'));}
   catch(e){return new Set();}
 }
@@ -2364,7 +2376,7 @@ function renderTxns(){
       </div>
       <div class="dayev-row-content txn-row">
         <div class="txn-ico" style="background:${pos?'rgba(93,202,165,.12)':'rgba(240,153,123,.12)'};color:${pos?'#1D9E75':'#D85A30'}">${renderIcon(t.icon||'ti-receipt')}</div>
-        <div class="txn-info"><div class="txn-desc">${stripIconPrefix(t.desc||t.cat)}</div><div class="txn-meta">${t.cat&&stripIconPrefix(t.cat)!==stripIconPrefix(t.desc||t.cat)?stripIconPrefix(t.cat)+' · ':''}${t.date}</div></div>
+        <div class="txn-info"><div class="txn-desc">${a?stripIconPrefix(a.name):'—'}</div><div class="txn-meta">${stripIconPrefix(t.desc||t.cat)} · ${t.date}</div></div>
         <div class="txn-amt ${pos?'pos':'neg'}">${pos?'+':''}${a?fmt(t.amount,a.currency):fmt(t.amount,'UAH')}</div>
       </div>
     </div>`;
@@ -3918,6 +3930,86 @@ function closeConfirm(){
 
 
 /* INIT */
+/* ═══════════════════════════════════════════
+   PULL-TO-REFRESH
+═══════════════════════════════════════════ */
+(function initPTR(){
+  const THRESHOLD=72;
+  let startY=0,currentY=0,isPulling=false,isRefreshing=false;
+  const ind=document.getElementById('ptrIndicator');
+  const icon=document.getElementById('ptrIcon');
+  const txt=document.getElementById('ptrText');
+
+  function setSpinner(){
+    icon.className='ptr-spinner';
+    icon.textContent='';
+    txt.textContent='Оновлення...';
+  }
+  function setArrow(pct){
+    icon.className='ptr-arrow';
+    icon.textContent='↓';
+    icon.style.transform=`rotate(${Math.min(pct*1.8,180)}deg)`;
+    txt.textContent=pct>=100?'Відпустіть для оновлення':'Потягніть для оновлення';
+  }
+  function hide(){
+    ind.classList.remove('visible');
+    isRefreshing=false;
+    setTimeout(()=>{icon.className='ptr-arrow';icon.textContent='↓';icon.style.transform='';txt.textContent='Потягніть для оновлення';},300);
+  }
+
+  document.addEventListener('touchstart',e=>{
+    if(isRefreshing)return;
+    const el=e.target.closest('.content');
+    if(!el)return;
+    if(el.scrollTop>0)return;
+    startY=e.touches[0].clientY;
+    isPulling=true;
+  },{passive:true});
+
+  document.addEventListener('touchmove',e=>{
+    if(!isPulling||isRefreshing)return;
+    currentY=e.touches[0].clientY;
+    const dy=currentY-startY;
+    if(dy<=0){isPulling=false;return;}
+    const pct=Math.min(dy/THRESHOLD*100,120);
+    ind.classList.add('visible');
+    setArrow(pct);
+  },{passive:true});
+
+  document.addEventListener('touchend',async()=>{
+    if(!isPulling||isRefreshing)return;
+    isPulling=false;
+    const dy=currentY-startY;
+    if(dy<THRESHOLD){ind.classList.remove('visible');return;}
+    isRefreshing=true;
+    setSpinner();
+    if(!navigator.onLine){
+      txt.textContent='Немає інтернету';
+      setTimeout(hide,1800);
+      return;
+    }
+    try{
+      const data=await Users.loadOrCreateData();
+      if(data&&!data._needsPIN&&!data._needsPINSetup){
+        ST={...ST,...data};
+        ensureST();
+        processRecurringEvents();
+        reconstructSnapshots();
+        recordMonthlySnapshot();
+        refreshAll();
+        syncCategorySelects();
+        loadSettingsRates();
+        txt.textContent='Оновлено ✓';
+      }else{
+        txt.textContent='Помилка оновлення';
+      }
+    }catch(e){
+      txt.textContent='Помилка з\'єднання';
+    }
+    setTimeout(hide,1200);
+  });
+})();
+
 function refreshAll(){renderAccounts();renderAssets().catch(e=>console.warn('[renderAssets]',e));}
 (async function init(){
   const hideLoad=()=>{
